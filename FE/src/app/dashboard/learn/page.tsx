@@ -17,16 +17,12 @@ import {
   Bookmark,
   CheckCircle2,
   Target,
-  Sparkles,
   Youtube,
   FileText,
   GraduationCap,
   Loader2,
   AlertCircle,
-  ChevronRight,
-  Award,
   Zap,
-  BarChart3,
   Brain,
   RefreshCw
 } from 'lucide-react';
@@ -49,7 +45,6 @@ interface LearningResource {
   isBookmarked?: boolean;
   isCompleted?: boolean;
 }
-
 
 interface LearningPath {
   skill: string;
@@ -91,7 +86,6 @@ const LearningPathPage = () => {
         console.log("📚 Starting learning path setup for user:", userId);
         setLoading(true);
 
-        // ✅ EXACT SAME API CALL as test component
         const userResponse = await fetch(
           `${backendUrl}/user/getUserSkillsAndSummary?userId=${userId}`,
           {
@@ -111,7 +105,6 @@ const LearningPathPage = () => {
           hasSummary: !!userData.resumeSummary
         });
 
-        // ✅ VALIDATE: Check if resume was uploaded (EXACT SAME as test component)
         if (!userData.skills || userData.skills.length === 0) {
           setError("No skills found. Please upload your resume first.");
           setTimeout(() => router.push("/assessment/resume"), 2000);
@@ -124,13 +117,10 @@ const LearningPathPage = () => {
           return;
         }
 
-        // ✅ Skills are ALREADY an array - no parsing needed!
         console.log("🎯 Skills array:", userData.skills);
         console.log("📊 Skills count:", userData.skills.length);
 
-        // ✅ Generate learning paths from skills array
-        const paths = generateLearningPaths(userData.skills, 75); // Default score 75
-        
+        const paths = generateLearningPaths(userData.skills, 75);
         const allResources = paths.flatMap(p => p.resources);
         
         console.log("✅ Learning paths generated:", {
@@ -188,174 +178,168 @@ const LearningPathPage = () => {
   };
 
   const generateResourcesForSkill = (skill: string, index: number): LearningResource[] => {
-  const resources: LearningResource[] = [];
-  
-  // ✅ Helper function to get YouTube thumbnail
-  const getYouTubeThumbnail = (videoId: string) => 
-    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-
-  // ✅ Curated YouTube video mappings for popular skills
-  const videoDatabase: Record<string, Array<{
-    videoId: string;
-    title: string;
-    channel: string;
-    duration: string;
-    difficulty: 'beginner' | 'intermediate' | 'advanced';
-    views: string;
-    rating: number;
-  }>> = {
-    'Python': [
-      { videoId: '_uQrJ0TkZlc', title: 'Python Tutorial - Python Full Course for Beginners', channel: 'Programming with Mosh', duration: '6h 14m', difficulty: 'beginner', views: '25M', rating: 4.9 },
-      { videoId: 'rfscVS0vtbw', title: 'Learn Python - Full Course for Beginners', channel: 'freeCodeCamp', duration: '4h 26m', difficulty: 'beginner', views: '35M', rating: 4.8 },
-      { videoId: 'WGJJIrtnfpk', title: 'Python in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '2.1M', rating: 4.9 }
-    ],
-    'JavaScript': [
-      { videoId: 'W6NZfCO5SIk', title: 'JavaScript Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 48m', difficulty: 'beginner', views: '8M', rating: 4.9 },
-      { videoId: 'PkZNo7MFNFg', title: 'Learn JavaScript - Full Course for Beginners', channel: 'freeCodeCamp', duration: '3h 26m', difficulty: 'beginner', views: '15M', rating: 4.8 },
-      { videoId: 'DHjqpvDnNGE', title: 'JavaScript in 100 Seconds', channel: 'Fireship', duration: '2m 10s', difficulty: 'beginner', views: '1.8M', rating: 4.9 }
-    ],
-    'React': [
-      { videoId: 'Tn6-PIqc4UM', title: 'React Course - Beginner\'s Tutorial', channel: 'freeCodeCamp', duration: '10h 25m', difficulty: 'intermediate', views: '12M', rating: 4.8 },
-      { videoId: 'SqcY0GlETPk', title: 'React Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 48m', difficulty: 'beginner', views: '6M', rating: 4.9 },
-      { videoId: 'Tn6-PIqc4UM', title: 'React in 100 Seconds', channel: 'Fireship', duration: '2m 20s', difficulty: 'beginner', views: '1.5M', rating: 4.9 }
-    ],
-    'Node.js': [
-      { videoId: 'TlB_eWDSMt4', title: 'Node.js Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 1m', difficulty: 'beginner', views: '4M', rating: 4.8 },
-      { videoId: 'Oe421EPjeBE', title: 'Node.js and Express.js - Full Course', channel: 'freeCodeCamp', duration: '8h 16m', difficulty: 'intermediate', views: '3.5M', rating: 4.7 },
-      { videoId: 'ENrzD9HAZK4', title: 'Node.js in 100 Seconds', channel: 'Fireship', duration: '2m 15s', difficulty: 'beginner', views: '1.2M', rating: 4.9 }
-    ],
-    'TypeScript': [
-      { videoId: 'BwuLxPH8IDs', title: 'TypeScript Course for Beginners', channel: 'freeCodeCamp', duration: '1h 55m', difficulty: 'intermediate', views: '1.8M', rating: 4.8 },
-      { videoId: 'BCg4U1FzODs', title: 'TypeScript Tutorial for Beginners', channel: 'Programming with Mosh', duration: '52m', difficulty: 'beginner', views: '2.5M', rating: 4.9 },
-      { videoId: 'zQnBQ4tB3ZA', title: 'TypeScript in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '1.4M', rating: 4.9 }
-    ],
-    'Machine Learning': [
-      { videoId: 'GwIo3gDZCVQ', title: 'Machine Learning Course - Full Tutorial', channel: 'freeCodeCamp', duration: '10h 0m', difficulty: 'intermediate', views: '8M', rating: 4.8 },
-      { videoId: 'Gv9_4yMHFhI', title: 'Machine Learning for Beginners', channel: 'freeCodeCamp', duration: '4h 0m', difficulty: 'beginner', views: '5M', rating: 4.7 },
-      { videoId: 'ukzFI9rgwfU', title: 'Machine Learning in 100 Seconds', channel: 'Fireship', duration: '2m 40s', difficulty: 'beginner', views: '1.1M', rating: 4.9 }
-    ],
-    'SQL': [
-      { videoId: 'HXV3zeQKqGY', title: 'SQL Tutorial - Full Course', channel: 'freeCodeCamp', duration: '4h 20m', difficulty: 'beginner', views: '12M', rating: 4.9 },
-      { videoId: 'zsjvFFKOm3c', title: 'SQL for Beginners Tutorial', channel: 'Programming with Mosh', duration: '3h 10m', difficulty: 'beginner', views: '6M', rating: 4.8 },
-      { videoId: 'xiUTqnI6xk8', title: 'SQL in 100 Seconds', channel: 'Fireship', duration: '2m 20s', difficulty: 'beginner', views: '900K', rating: 4.9 }
-    ],
-    'Docker': [
-      { videoId: 'fqMOX6JJhGo', title: 'Docker Tutorial for Beginners', channel: 'freeCodeCamp', duration: '3h 10m', difficulty: 'intermediate', views: '4.5M', rating: 4.8 },
-      { videoId: 'pTFZFxd4hOI', title: 'Docker Crash Course Tutorial', channel: 'TechWorld with Nana', duration: '1h 15m', difficulty: 'beginner', views: '3M', rating: 4.9 },
-      { videoId: 'Gjnup-PuquQ', title: 'Docker in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '1.6M', rating: 4.9 }
-    ],
-    'Git': [
-      { videoId: 'RGOj5yH7evk', title: 'Git and GitHub for Beginners', channel: 'freeCodeCamp', duration: '1h 8m', difficulty: 'beginner', views: '5M', rating: 4.9 },
-      { videoId: 'HkdAHXoRtos', title: 'Git Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 10m', difficulty: 'beginner', views: '4M', rating: 4.8 },
-      { videoId: 'hwP7WQkmECE', title: 'Git in 100 Seconds', channel: 'Fireship', duration: '2m 15s', difficulty: 'beginner', views: '1.1M', rating: 4.9 }
-    ]
-  };
-
-  // ✅ Get videos for the skill (or use default if not in database)
-  const skillVideos = videoDatabase[skill] || [
-    { videoId: '', title: `${skill} Complete Tutorial`, channel: 'YouTube', duration: '8h 45m', difficulty: 'beginner', views: '2.3M', rating: 4.8 },
-    { videoId: '', title: `${skill} in 100 Seconds`, channel: 'Fireship', duration: '2m', difficulty: 'beginner', views: '1.5M', rating: 4.9 },
-    { videoId: '', title: `Advanced ${skill} Guide`, channel: 'YouTube', duration: '3h 20m', difficulty: 'advanced', views: '890K', rating: 4.7 }
-  ];
-
-  // ✅ Add YouTube Videos with real links and thumbnails
-  skillVideos.forEach((video, idx) => {
-    const videoUrl = video.videoId 
-      ? `https://www.youtube.com/watch?v=${video.videoId}`
-      : `https://www.youtube.com/results?search_query=${encodeURIComponent(skill + ' tutorial')}`;
+    const resources: LearningResource[] = [];
     
-    const thumbnail = video.videoId 
-      ? getYouTubeThumbnail(video.videoId)
-      : undefined;
+    const getYouTubeThumbnail = (videoId: string) => 
+      `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-    resources.push({
-      id: `yt-${skill}-${idx + 1}`,
-      title: video.title,
-      type: 'video',
-      platform: video.channel,
-      duration: video.duration,
-      difficulty: video.difficulty,
-      url: videoUrl,
-      description: `${video.difficulty === 'beginner' ? 'Perfect starting point' : video.difficulty === 'intermediate' ? 'Take your skills to the next level' : 'Master advanced concepts'} with this ${video.duration} ${skill} tutorial from ${video.channel}.`,
-      skill,
-      rating: video.rating,
-      views: video.views,
-      thumbnail: thumbnail, // ✅ Add thumbnail URL
-      isBookmarked: index < 2 && idx === 0,
-      isCompleted: index === 0 && idx === 0
+    const videoDatabase: Record<string, Array<{
+      videoId: string;
+      title: string;
+      channel: string;
+      duration: string;
+      difficulty: 'beginner' | 'intermediate' | 'advanced';
+      views: string;
+      rating: number;
+    }>> = {
+      'Python': [
+        { videoId: '_uQrJ0TkZlc', title: 'Python Tutorial - Python Full Course for Beginners', channel: 'Programming with Mosh', duration: '6h 14m', difficulty: 'beginner', views: '25M', rating: 4.9 },
+        { videoId: 'rfscVS0vtbw', title: 'Learn Python - Full Course for Beginners', channel: 'freeCodeCamp', duration: '4h 26m', difficulty: 'beginner', views: '35M', rating: 4.8 },
+        { videoId: 'WGJJIrtnfpk', title: 'Python in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '2.1M', rating: 4.9 }
+      ],
+      'JavaScript': [
+        { videoId: 'W6NZfCO5SIk', title: 'JavaScript Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 48m', difficulty: 'beginner', views: '8M', rating: 4.9 },
+        { videoId: 'PkZNo7MFNFg', title: 'Learn JavaScript - Full Course for Beginners', channel: 'freeCodeCamp', duration: '3h 26m', difficulty: 'beginner', views: '15M', rating: 4.8 },
+        { videoId: 'DHjqpvDnNGE', title: 'JavaScript in 100 Seconds', channel: 'Fireship', duration: '2m 10s', difficulty: 'beginner', views: '1.8M', rating: 4.9 }
+      ],
+      'React': [
+        { videoId: 'Tn6-PIqc4UM', title: 'React Course - Beginner\'s Tutorial', channel: 'freeCodeCamp', duration: '10h 25m', difficulty: 'intermediate', views: '12M', rating: 4.8 },
+        { videoId: 'SqcY0GlETPk', title: 'React Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 48m', difficulty: 'beginner', views: '6M', rating: 4.9 },
+        { videoId: 'Tn6-PIqc4UM', title: 'React in 100 Seconds', channel: 'Fireship', duration: '2m 20s', difficulty: 'beginner', views: '1.5M', rating: 4.9 }
+      ],
+      'Node.js': [
+        { videoId: 'TlB_eWDSMt4', title: 'Node.js Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 1m', difficulty: 'beginner', views: '4M', rating: 4.8 },
+        { videoId: 'Oe421EPjeBE', title: 'Node.js and Express.js - Full Course', channel: 'freeCodeCamp', duration: '8h 16m', difficulty: 'intermediate', views: '3.5M', rating: 4.7 },
+        { videoId: 'ENrzD9HAZK4', title: 'Node.js in 100 Seconds', channel: 'Fireship', duration: '2m 15s', difficulty: 'beginner', views: '1.2M', rating: 4.9 }
+      ],
+      'TypeScript': [
+        { videoId: 'BwuLxPH8IDs', title: 'TypeScript Course for Beginners', channel: 'freeCodeCamp', duration: '1h 55m', difficulty: 'intermediate', views: '1.8M', rating: 4.8 },
+        { videoId: 'BCg4U1FzODs', title: 'TypeScript Tutorial for Beginners', channel: 'Programming with Mosh', duration: '52m', difficulty: 'beginner', views: '2.5M', rating: 4.9 },
+        { videoId: 'zQnBQ4tB3ZA', title: 'TypeScript in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '1.4M', rating: 4.9 }
+      ],
+      'Machine Learning': [
+        { videoId: 'GwIo3gDZCVQ', title: 'Machine Learning Course - Full Tutorial', channel: 'freeCodeCamp', duration: '10h 0m', difficulty: 'intermediate', views: '8M', rating: 4.8 },
+        { videoId: 'Gv9_4yMHFhI', title: 'Machine Learning for Beginners', channel: 'freeCodeCamp', duration: '4h 0m', difficulty: 'beginner', views: '5M', rating: 4.7 },
+        { videoId: 'ukzFI9rgwfU', title: 'Machine Learning in 100 Seconds', channel: 'Fireship', duration: '2m 40s', difficulty: 'beginner', views: '1.1M', rating: 4.9 }
+      ],
+      'SQL': [
+        { videoId: 'HXV3zeQKqGY', title: 'SQL Tutorial - Full Course', channel: 'freeCodeCamp', duration: '4h 20m', difficulty: 'beginner', views: '12M', rating: 4.9 },
+        { videoId: 'zsjvFFKOm3c', title: 'SQL for Beginners Tutorial', channel: 'Programming with Mosh', duration: '3h 10m', difficulty: 'beginner', views: '6M', rating: 4.8 },
+        { videoId: 'xiUTqnI6xk8', title: 'SQL in 100 Seconds', channel: 'Fireship', duration: '2m 20s', difficulty: 'beginner', views: '900K', rating: 4.9 }
+      ],
+      'Docker': [
+        { videoId: 'fqMOX6JJhGo', title: 'Docker Tutorial for Beginners', channel: 'freeCodeCamp', duration: '3h 10m', difficulty: 'intermediate', views: '4.5M', rating: 4.8 },
+        { videoId: 'pTFZFxd4hOI', title: 'Docker Crash Course Tutorial', channel: 'TechWorld with Nana', duration: '1h 15m', difficulty: 'beginner', views: '3M', rating: 4.9 },
+        { videoId: 'Gjnup-PuquQ', title: 'Docker in 100 Seconds', channel: 'Fireship', duration: '2m 30s', difficulty: 'beginner', views: '1.6M', rating: 4.9 }
+      ],
+      'Git': [
+        { videoId: 'RGOj5yH7evk', title: 'Git and GitHub for Beginners', channel: 'freeCodeCamp', duration: '1h 8m', difficulty: 'beginner', views: '5M', rating: 4.9 },
+        { videoId: 'HkdAHXoRtos', title: 'Git Tutorial for Beginners', channel: 'Programming with Mosh', duration: '1h 10m', difficulty: 'beginner', views: '4M', rating: 4.8 },
+        { videoId: 'hwP7WQkmECE', title: 'Git in 100 Seconds', channel: 'Fireship', duration: '2m 15s', difficulty: 'beginner', views: '1.1M', rating: 4.9 }
+      ]
+    };
+
+    const skillVideos = videoDatabase[skill] || [
+      { videoId: '', title: `${skill} Complete Tutorial`, channel: 'YouTube', duration: '8h 45m', difficulty: 'beginner', views: '2.3M', rating: 4.8 },
+      { videoId: '', title: `${skill} in 100 Seconds`, channel: 'Fireship', duration: '2m', difficulty: 'beginner', views: '1.5M', rating: 4.9 },
+      { videoId: '', title: `Advanced ${skill} Guide`, channel: 'YouTube', duration: '3h 20m', difficulty: 'advanced', views: '890K', rating: 4.7 }
+    ];
+
+    skillVideos.forEach((video, idx) => {
+      const videoUrl = video.videoId 
+        ? `https://www.youtube.com/watch?v=${video.videoId}`
+        : `https://www.youtube.com/results?search_query=${encodeURIComponent(skill + ' tutorial')}`;
+      
+      const thumbnail = video.videoId 
+        ? getYouTubeThumbnail(video.videoId)
+        : undefined;
+
+      resources.push({
+        id: `yt-${skill}-${idx + 1}`,
+        title: video.title,
+        type: 'video',
+        platform: video.channel,
+        duration: video.duration,
+        difficulty: video.difficulty,
+        url: videoUrl,
+        description: `${video.difficulty === 'beginner' ? 'Perfect starting point' : video.difficulty === 'intermediate' ? 'Take your skills to the next level' : 'Master advanced concepts'} with this ${video.duration} ${skill} tutorial from ${video.channel}.`,
+        skill,
+        rating: video.rating,
+        views: video.views,
+        thumbnail: thumbnail,
+        isBookmarked: index < 2 && idx === 0,
+        isCompleted: index === 0 && idx === 0
+      });
     });
-  });
 
-  // Blog Articles (keep existing)
-  resources.push(
-    {
-      id: `blog-${skill}-1`,
-      title: `The Ultimate ${skill} Guide for 2025`,
-      type: 'article',
-      platform: 'Medium',
-      duration: '15 min read',
-      difficulty: 'intermediate',
-      url: `https://medium.com/search?q=${encodeURIComponent(skill)}`,
-      description: `Comprehensive written guide covering ${skill} with practical examples and code snippets.`,
-      skill,
-      rating: 4.6,
-      views: '45K reads',
-      isBookmarked: false,
-      isCompleted: false
-    },
-    {
-      id: `blog-${skill}-2`,
-      title: `${skill} Best Practices in Production`,
-      type: 'article',
-      platform: 'Dev.to',
-      duration: '12 min read',
-      difficulty: 'advanced',
-      url: `https://dev.to/search?q=${encodeURIComponent(skill)}`,
-      description: `Learn industry best practices and real-world applications of ${skill}.`,
-      skill,
-      rating: 4.8,
-      views: '32K reads',
-      isBookmarked: index < 3,
-      isCompleted: false
-    }
-  );
+    resources.push(
+      {
+        id: `blog-${skill}-1`,
+        title: `The Ultimate ${skill} Guide for 2025`,
+        type: 'article',
+        platform: 'Medium',
+        duration: '15 min read',
+        difficulty: 'intermediate',
+        url: `https://medium.com/search?q=${encodeURIComponent(skill)}`,
+        description: `Comprehensive written guide covering ${skill} with practical examples and code snippets.`,
+        skill,
+        rating: 4.6,
+        views: '45K reads',
+        isBookmarked: false,
+        isCompleted: false
+      },
+      {
+        id: `blog-${skill}-2`,
+        title: `${skill} Best Practices in Production`,
+        type: 'article',
+        platform: 'Dev.to',
+        duration: '12 min read',
+        difficulty: 'advanced',
+        url: `https://dev.to/search?q=${encodeURIComponent(skill)}`,
+        description: `Learn industry best practices and real-world applications of ${skill}.`,
+        skill,
+        rating: 4.8,
+        views: '32K reads',
+        isBookmarked: index < 3,
+        isCompleted: false
+      }
+    );
 
-  // Online Courses (keep existing)
-  resources.push(
-    {
-      id: `course-${skill}-1`,
-      title: `${skill} Bootcamp 2025 - Complete Guide`,
-      type: 'course',
-      platform: 'Udemy',
-      duration: '42 hours',
-      difficulty: 'beginner',
-      url: `https://www.udemy.com/courses/search/?q=${encodeURIComponent(skill)}`,
-      description: `Comprehensive ${skill} course with hands-on projects, quizzes, and certificate.`,
-      skill,
-      rating: 4.7,
-      views: '125K students',
-      isBookmarked: false,
-      isCompleted: false
-    },
-    {
-      id: `course-${skill}-2`,
-      title: `Advanced ${skill} Masterclass`,
-      type: 'course',
-      platform: 'Coursera',
-      duration: '6 weeks',
-      difficulty: 'advanced',
-      url: `https://www.coursera.org/search?query=${encodeURIComponent(skill)}`,
-      description: `University-level ${skill} course with industry projects and certification.`,
-      skill,
-      rating: 4.9,
-      views: '89K students',
-      isBookmarked: false,
-      isCompleted: false
-    }
-  );
+    resources.push(
+      {
+        id: `course-${skill}-1`,
+        title: `${skill} Bootcamp 2025 - Complete Guide`,
+        type: 'course',
+        platform: 'Udemy',
+        duration: '42 hours',
+        difficulty: 'beginner',
+        url: `https://www.udemy.com/courses/search/?q=${encodeURIComponent(skill)}`,
+        description: `Comprehensive ${skill} course with hands-on projects, quizzes, and certificate.`,
+        skill,
+        rating: 4.7,
+        views: '125K students',
+        isBookmarked: false,
+        isCompleted: false
+      },
+      {
+        id: `course-${skill}-2`,
+        title: `Advanced ${skill} Masterclass`,
+        type: 'course',
+        platform: 'Coursera',
+        duration: '6 weeks',
+        difficulty: 'advanced',
+        url: `https://www.coursera.org/search?query=${encodeURIComponent(skill)}`,
+        description: `University-level ${skill} course with industry projects and certification.`,
+        skill,
+        rating: 4.9,
+        views: '89K students',
+        isBookmarked: false,
+        isCompleted: false
+      }
+    );
 
-  return resources;
-};
+    return resources;
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -384,7 +368,6 @@ const LearningPathPage = () => {
     }
   };
 
-  // ✅ SAME loading pattern as test component
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -397,7 +380,6 @@ const LearningPathPage = () => {
     );
   }
 
-  // ✅ SAME error pattern as test component
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -513,7 +495,7 @@ const LearningPathPage = () => {
         </div>
 
         {/* Filters */}
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-gray-900/50 border-gray-700">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4 items-center justify-between">
               <div className="flex flex-wrap gap-2">
@@ -521,7 +503,7 @@ const LearningPathPage = () => {
                   variant={selectedSkill === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedSkill('all')}
-                  className={selectedSkill === 'all' ? 'bg-blue-600' : 'border-gray-700'}
+                  className={selectedSkill === 'all' ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-600 hover:bg-gray-800'}
                 >
                   All Skills
                 </Button>
@@ -531,7 +513,7 @@ const LearningPathPage = () => {
                     variant={selectedSkill === path.skill ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedSkill(path.skill)}
-                    className={selectedSkill === path.skill ? 'bg-blue-600' : 'border-gray-700'}
+                    className={selectedSkill === path.skill ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-600 hover:bg-gray-800'}
                   >
                     {path.skill}
                   </Button>
@@ -543,7 +525,7 @@ const LearningPathPage = () => {
                   variant={filter === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilter('all')}
-                  className={filter === 'all' ? 'bg-purple-600' : 'border-gray-700'}
+                  className={filter === 'all' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
                 >
                   All Types
                 </Button>
@@ -551,7 +533,7 @@ const LearningPathPage = () => {
                   variant={filter === 'video' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilter('video')}
-                  className={filter === 'video' ? 'bg-purple-600' : 'border-gray-700'}
+                  className={filter === 'video' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
                 >
                   <Youtube className="h-4 w-4 mr-1" />
                   Videos
@@ -560,7 +542,7 @@ const LearningPathPage = () => {
                   variant={filter === 'article' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilter('article')}
-                  className={filter === 'article' ? 'bg-purple-600' : 'border-gray-700'}
+                  className={filter === 'article' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
                 >
                   <FileText className="h-4 w-4 mr-1" />
                   Articles
@@ -569,7 +551,7 @@ const LearningPathPage = () => {
                   variant={filter === 'course' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilter('course')}
-                  className={filter === 'course' ? 'bg-purple-600' : 'border-gray-700'}
+                  className={filter === 'course' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
                 >
                   <GraduationCap className="h-4 w-4 mr-1" />
                   Courses
@@ -583,17 +565,17 @@ const LearningPathPage = () => {
         {filteredPaths.map((path, pathIndex) => (
           <Card 
             key={path.skill} 
-            className="bg-gray-900 border-gray-800 animate-fade-in"
+            className="bg-gray-900/80 border-gray-700 animate-fade-in backdrop-blur-sm"
             style={{ animationDelay: `${pathIndex * 100}ms` }}
           >
-            <CardHeader>
+            <CardHeader className="border-b border-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-500/10 rounded-lg">
                     <Zap className="h-5 w-5 text-blue-400" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{path.skill}</CardTitle>
+                    <CardTitle className="text-2xl text-white">{path.skill}</CardTitle>
                     <p className="text-sm text-gray-400 mt-1">
                       Progress: {path.currentLevel}% → {path.targetLevel}%
                     </p>
@@ -609,104 +591,94 @@ const LearningPathPage = () => {
               />
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {path.resources
                   .filter(r => filter === 'all' || r.type === filter)
                   .map((resource, resourceIndex) => (
                     <div
-  key={resource.id}
-  className="group bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-blue-500/50 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer animate-slide-up"
-  style={{ animationDelay: `${(pathIndex * 100) + (resourceIndex * 50)}ms` }}
-  onClick={() => window.open(resource.url, '_blank')}
->
-  {/* ✅ YouTube Thumbnail (only for videos with thumbnail) */}
-  {resource.type === 'video' && resource.thumbnail && (
-    <div className="relative h-48 w-full overflow-hidden bg-gray-900">
-      <img
-        src={resource.thumbnail}
-        alt={resource.title}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        onError={(e) => {
-          // Fallback if thumbnail fails to load
-          e.currentTarget.src = `https://img.youtube.com/vi/default/maxresdefault.jpg`;
-        }}
-      />
-      {/* Play button overlay */}
-      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-        <PlayCircle className="h-16 w-16 text-white" />
-      </div>
-      {/* Duration badge */}
-      <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-white">
-        {resource.duration}
-      </div>
-    </div>
-  )}
+                      key={resource.id}
+                      className="group bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden hover:border-blue-500/50 hover:bg-gray-800/80 transition-all duration-300 cursor-pointer animate-slide-up backdrop-blur-sm"
+                      style={{ animationDelay: `${(pathIndex * 100) + (resourceIndex * 50)}ms` }}
+                      onClick={() => window.open(resource.url, '_blank')}
+                    >
+                      {/* YouTube Thumbnail */}
+                      {resource.type === 'video' && resource.thumbnail && (
+                        <div className="relative h-48 w-full overflow-hidden bg-gray-900">
+                          <img
+                            src={resource.thumbnail}
+                            alt={resource.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src = `https://img.youtube.com/vi/default/maxresdefault.jpg`;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <PlayCircle className="h-16 w-16 text-white" />
+                          </div>
+                          <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-white">
+                            {resource.duration}
+                          </div>
+                        </div>
+                      )}
 
-  {/* Content */}
-  <div className="p-4">
-    {/* Resource Type Badge */}
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2 text-blue-400">
-        {getTypeIcon(resource.type)}
-        <span className="text-xs font-medium">{resource.platform}</span>
-      </div>
-      <div className="flex gap-1">
-        {resource.isBookmarked && (
-          <Bookmark className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-        )}
-        {resource.isCompleted && (
-          <CheckCircle2 className="h-4 w-4 text-green-400" />
-        )}
-      </div>
-    </div>
+                      {/* Content */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2 text-blue-400">
+                            {getTypeIcon(resource.type)}
+                            <span className="text-xs font-medium">{resource.platform}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {resource.isBookmarked && (
+                              <Bookmark className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                            )}
+                            {resource.isCompleted && (
+                              <CheckCircle2 className="h-4 w-4 text-green-400" />
+                            )}
+                          </div>
+                        </div>
 
-    {/* Title */}
-    <h4 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
-      {resource.title}
-    </h4>
+                        <h4 className="font-semibold text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
+                          {resource.title}
+                        </h4>
 
-    {/* Description */}
-    <p className="text-sm text-gray-400 mb-3 line-clamp-2">
-      {resource.description}
-    </p>
+                        <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                          {resource.description}
+                        </p>
 
-    {/* Meta Info */}
-    <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
-      {!resource.thumbnail && (
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {resource.duration}
-        </div>
-      )}
-      {resource.rating && (
-        <div className="flex items-center gap-1">
-          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-          {resource.rating}
-        </div>
-      )}
-      {resource.views && (
-        <div className="flex items-center gap-1">
-          <TrendingUp className="h-3 w-3" />
-          {resource.views}
-        </div>
-      )}
-    </div>
+                        <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+                          {!resource.thumbnail && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {resource.duration}
+                            </div>
+                          )}
+                          {resource.rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                              {resource.rating}
+                            </div>
+                          )}
+                          {resource.views && (
+                            <div className="flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3" />
+                              {resource.views}
+                            </div>
+                          )}
+                        </div>
 
-    {/* Difficulty Badge */}
-    <Badge className={`${getDifficultyColor(resource.difficulty)} text-xs border`}>
-      {resource.difficulty}
-    </Badge>
+                        <Badge className={`${getDifficultyColor(resource.difficulty)} text-xs border`}>
+                          {resource.difficulty}
+                        </Badge>
 
-    {/* Hover Effect */}
-    <div className="mt-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-      <span className="text-xs text-blue-400">Click to view</span>
-      <ExternalLink className="h-4 w-4 text-blue-400" />
-    </div>
-  </div>
-</div>
-
-                ))}
+                        <div className="mt-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-xs text-blue-400">Click to view</span>
+                          <ExternalLink className="h-4 w-4 text-blue-400" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -714,7 +686,7 @@ const LearningPathPage = () => {
 
         {/* Empty State */}
         {filteredResources.length === 0 && (
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className="bg-gray-900/50 border-gray-700">
             <CardContent className="p-12 text-center">
               <AlertCircle className="h-12 w-12 text-gray-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-400 mb-2">No resources found</h3>
