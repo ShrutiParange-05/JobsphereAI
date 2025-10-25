@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,26 +11,33 @@ datasource db {
 }
 
 model User {
-  id         Int       @id @default(autoincrement())
-  name       String?
-  email      String    @unique
-  password   String?
-  created_at DateTime  @default(now())
-
-  resumeSummary  String?
-  skills         String[]  // Array of extracted skills
-  testResults    TestResult?
+  id                  Int          @id @default(autoincrement())
+  name                String
+  email               String       @unique
+  password            String
+  skills              String[]     // ✅ Changed to String array
+  resumeSummary       String?      @db.Text
+  testScore           Int?         
+  testFeedback        String?      @db.Text
+  recommendedCareer   String?      
+  recommendedCourses  String?      @db.Text
+  created_at          DateTime     @default(now())
+  
+  testResult          TestResult?
+  
+  @@map("users")
 }
 
-model TestResult {
-  id               Int       @id @default(autoincrement())
-  userId           Int       @unique
-  user             User      @relation(fields: [userId], references: [id])
-  score            Int      @default(0)
-  strongSkills     String[]
-  weakSkills       String[]
-  recommendedCareer String?
-  recommendedCourses String[]
 
-  created_at DateTime  @default(now())
+model TestResult {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @unique
+  user                User     @relation(fields: [userId], references: [id])
+  score               Int
+  feedback            String   @db.Text
+  recommendedCareer   String
+  recommendedCourses  String   @db.Text
+  created_at          DateTime @default(now())
+  
+  @@map("test_results")
 }

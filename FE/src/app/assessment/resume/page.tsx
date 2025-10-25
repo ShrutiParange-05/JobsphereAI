@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
 import axios from "axios";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -11,74 +12,75 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CheckCircle2, Upload } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useRouter } from "next/navigation";
+import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
-const backendTestUrl = process.env.NEXT_PUBLIC_TEST_URL;
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 const Page = () => {
   const router = useRouter();
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const [uploadStatus, setUploadStatus] = useState("idle");
+  const [error, setError] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-  const onDrop = (acceptedFiles: File[]) => {
-    setFile(acceptedFiles[0]);
-  };
+  const onDrop = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "application/pdf": [".pdf"] },
-  });
-
-  const uploadFile = async () => {
-    if (!file) return;
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadStatus("idle");
+    const file = acceptedFiles[0];
+    setUploadedFile(file);
+    setUploadStatus("uploading");
+    setError("");
 
     try {
-      // Create FormData object
-      const formData = new FormData();
-      formData.append("input_resume", file); // Append file directly
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        throw new Error("User not logged in. Please sign up first.");
+      }
 
-      // First request to generate summary
-      const generateResponse = await axios.post(
-        `${backendTestUrl}/generate_summary`,
+      console.log("📤 Uploading resume for user ID:", userId);
+      console.log("📤 Backend URL:", backendUrl);
+      console.log("📤 Full URL:", `${backendUrl}/resume/upload`);
+
+      // Step 1: Upload and parse resume
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const uploadResponse = await axios.post(
+        `${backendUrl}/resume/upload`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total ?? 1)
-            );
-            setUploadProgress(progress);
-          },
         }
       );
 
-      const data = generateResponse.data;
+      console.log("✅ Upload response:", uploadResponse.data);
 
-      // Get user ID from localStorage
-      const userId = localStorage.getItem("userId");
-      if (!userId) throw new Error("User not logged in");
-      
+      if (!uploadResponse.data?.data) {
+        throw new Error("Invalid response from server");
+      }
 
-      // Second request to store data
-      await axios.post(
+      const { summary, skills } = uploadResponse.data.data;
+
+      if (!summary || !skills || !Array.isArray(skills)) {
+        throw new Error("Invalid data format from server");
+      }
+
+      console.log("📊 Extracted ", {
+        summaryLength: summary.length,
+        skillsCount: skills.length,
+        firstSkill: skills[0],
+      });
+
+      // Step 2: Store skills and summary in database
+      console.log("💾 Storing user skills and summary...");
+
+      const storeResponse = await axios.post(
         `${backendUrl}/user/storeUserSkillsAndSummary`,
         {
-          userId,
-          resumeSummary: data.profile_summary,
-          skills: data.skills,
+          userId: parseInt(userId, 10),
+          skills: skills,
+          resumeSummary: summary,
         },
         {
           headers: {
@@ -87,77 +89,149 @@ const Page = () => {
         }
       );
 
+      console.log("✅ Store response:", storeResponse.data);
+
       setUploadStatus("success");
+
+      // Redirect to test page after 1.5 seconds
       setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
-    } catch (error) {
-      console.error("Upload error:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Response data:", error.response?.data);
-        console.error("Response status:", error.response?.status);
+        router.push("/assessment/test");
+      }, 1500);
+    } catch (err: any) {
+      console.error("❌ Upload error:", err);
+      console.error("❌ Error response:", err.response?.data);
+      console.error("❌ Error status:", err.response?.status);
+      console.error("❌ Error message:", err.message);
+
+      let errorMessage = "Upload failed. Please try again.";
+
+      if (err.response?.status === 400) {
+        errorMessage = err.response.data?.message || "Bad request - Invalid data format";
+      } else if (err.response?.status === 404) {
+        errorMessage = "Backend route not found. Please check server is running and routes are configured.";
+        // ❌ REMOVED: Do NOT redirect on error
+        // setTimeout(() => router.push("/auth/signup"), 2000);
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
       }
+
+      setError(errorMessage);
       setUploadStatus("error");
-    } finally {
-      setUploading(false);
     }
   };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "application/pdf": [".pdf"],
+    },
+    multiple: false,
+    maxSize: 10485760, // 10MB
+  });
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800 text-white">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Resume Upload</CardTitle>
-          <CardDescription>
-            Drop your resume here or click to select
+          <CardTitle className="text-2xl text-white">Resume Upload</CardTitle>
+          <CardDescription className="text-gray-400">
+            Upload your resume to get personalized skill analysis and career
+            recommendations
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              isDragActive
-                ? "border-blue-500 bg-blue-500 bg-opacity-10"
-                : "border-gray-600 hover:border-gray-500"
-            }`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2">
-              {file
-                ? file.name
-                : "Drag & drop your resume here, or click to select"}
-            </p>
-          </div>
+          {uploadStatus === "success" ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Resume parsed successfully!
+              </h3>
+              <p className="text-gray-400">Redirecting to assessment...</p>
+            </div>
+          ) : (
+            <>
+              <div
+                {...getRootProps()}
+                className={`
+                  border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+                  ${
+                    isDragActive
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-gray-600 hover:border-gray-500"
+                  }
+                  ${
+                    uploadStatus === "uploading"
+                      ? "opacity-50 pointer-events-none"
+                      : ""
+                  }
+                `}
+              >
+                <input {...getInputProps()} />
+                {uploadStatus === "uploading" ? (
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                    <p className="text-white">Processing resume...</p>
+                    <p className="text-gray-400 text-sm mt-2">
+                      Parsing PDF and extracting skills
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {uploadedFile ? (
+                      <FileText className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    ) : (
+                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    )}
+                    <p className="text-white font-semibold mb-2">
+                      {uploadedFile
+                        ? uploadedFile.name
+                        : "Drop your resume here"}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      or click to browse (PDF only, max 10MB)
+                    </p>
+                  </>
+                )}
+              </div>
 
-          {file && !uploading && (
-            <Button onClick={uploadFile} className="w-full mt-4">
-              Upload Resume
-            </Button>
-          )}
+              {error && (
+                <div className="mt-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-red-400 text-sm font-semibold mb-1">Error</p>
+                    <p className="text-red-300 text-sm">{error}</p>
+                    <p className="text-red-400 text-xs mt-2">
+                      Check browser console (F12) for detailed error information
+                    </p>
+                  </div>
+                </div>
+              )}
 
-          {uploading && (
-            <Progress value={uploadProgress} className="w-full mt-4" />
-          )}
-
-          {uploadStatus === "success" && (
-            <Alert variant="default" className="mt-4 bg-green-500 text-white">
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertTitle>Success</AlertTitle>
-              <AlertDescription>
-                Your resume has been uploaded successfully.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {uploadStatus === "error" && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                There was an error uploading your resume. Please try again.
-              </AlertDescription>
-            </Alert>
+              <div className="mt-6 flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/dashboard")}
+                  className="flex-1 text-gray-300 border-gray-600 hover:bg-gray-700"
+                  disabled={uploadStatus === "uploading"}
+                >
+                  Skip for now
+                </Button>
+                {uploadStatus === "error" && (
+                  <Button
+                    onClick={() => {
+                      setUploadStatus("idle");
+                      setError("");
+                      setUploadedFile(null);
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Try Again
+                  </Button>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

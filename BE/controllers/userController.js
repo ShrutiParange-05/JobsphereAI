@@ -251,27 +251,537 @@ export const logoutUser = (req, res) => {
   }
 };
 
+// export const storeUserSkillsAndSummary = async (req, res) => {
+//   try {
+//     const { userId, skills, resumeSummary } = req.body; // ← FIXED
+
+//     console.log("📥 Received request to store skills and summary");
+//     console.log("User ID:", userId);
+//     console.log("Skills count:", skills?.length);
+
+//     const userIdInt = parseInt(userId, 10);
+
+//     if (isNaN(userIdInt)) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Invalid user ID"));
+//     }
+
+//     if (!skills || !Array.isArray(skills) || skills.length === 0) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Skills array is required"));
+//     }
+
+//     if (!resumeSummary || typeof resumeSummary !== "string") {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Resume summary is required"));
+//     }
+
+//     const user = await prisma.user.update({
+//       where: { id: userIdInt },
+//       data: {
+//         skills: skills,
+//         resumeSummary: resumeSummary,
+//       },
+//     });
+
+//     console.log("✅ Skills and summary stored successfully");
+
+//     return res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           true,
+//           200,
+//           { skills: user.skills, summary: user.resumeSummary },
+//           "Skills and summary stored successfully"
+//         )
+//       );
+//   } catch (error) {
+//     console.error("❌ Error storing skills and summary:", error);
+//     return res
+//       .status(500)
+//       .json(new ApiResponse(false, 500, null, error.message));
+//   }
+// };
+// export const storeUserSkillsAndSummary = async (req, res) => {
+//   try {
+//     const { userId, skills, resumeSummary } = req.body;
+
+//     console.log("📥 Received request to store skills and summary");
+//     console.log("User ID:", userId);
+//     console.log("Skills count:", skills?.length);
+
+//     const userIdInt = parseInt(userId, 10);
+
+//     if (isNaN(userIdInt)) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Invalid user ID"));
+//     }
+
+//     if (!skills || !Array.isArray(skills) || skills.length === 0) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Skills array is required"));
+//     }
+
+//     if (!resumeSummary || typeof resumeSummary !== "string") {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Resume summary is required"));
+//     }
+
+//     // ✅ FIX: Convert array to JSON string
+//     const skillsString = JSON.stringify(skills);
+
+//     const user = await prisma.user.update({
+//       where: { id: userIdInt },
+//       data: {
+//         skills: skillsString,
+//         resumeSummary: resumeSummary,
+//       },
+//     });
+
+//     console.log("✅ Skills and summary stored successfully");
+
+//     return res.status(200).json(
+//       new ApiResponse(
+//         true,
+//         200,
+//         {
+//           skills: JSON.parse(user.skills), // ✅ Parse back to array for response
+//           summary: user.resumeSummary,
+//         },
+//         "Skills and summary stored successfully"
+//       )
+//     );
+//   } catch (error) {
+//     console.error("❌ Error storing skills and summary:", error);
+//     return res
+//       .status(500)
+//       .json(new ApiResponse(false, 500, null, error.message));
+//   }
+// };
+
+
+
+// export const getUserSkillsAndSummary = async (req, res) => {
+//   try {
+//     const userId = parseInt(req.query.userId, 10);
+
+//     if (Number.isNaN(userId)) {
+//       return res.status(400).json({ error: "Invalid userId format" });
+//     }
+
+//     const user = await prisma.user.findUnique({
+//       where: { id: userId },
+//       select: {
+//         id: true,
+//         name: true,
+//         email: true,
+//         resumeSummary: true,
+//         skills: true,
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     res.status(200).json(user);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+// export const storeTestResults = async (req, res) => {
+//   try {
+//     const {
+//       userId,
+//       Score,
+//       Feedback,
+//       "Recommended Career Path": recommendedCareer,
+//       "Recommended Courses": recommendedCourses,
+//     } = req.body;
+
+//     console.log("Storing test results for user:", userId);
+//     console.log("Score:", Score);
+
+//     const userIdInt = parseInt(userId, 10);
+
+//     if (isNaN(userIdInt)) {
+//       return res
+//         .status(400)
+//         .json(new ApiResponse(false, 400, null, "Invalid user ID"));
+//     }
+
+//     const user = await prisma.user.findUnique({
+//       where: { id: userIdInt },
+//     });
+
+//     if (!user) {
+//       return res
+//         .status(404)
+//         .json(new ApiResponse(false, 404, null, "User not found"));
+//     }
+
+//     // Handle recommended career
+//     const careerString = Array.isArray(recommendedCareer)
+//       ? recommendedCareer.join(", ")
+//       : recommendedCareer || "Not specified";
+
+//     // Handle recommended courses
+//     const coursesString = Array.isArray(recommendedCourses)
+//       ? recommendedCourses.join(", ")
+//       : typeof recommendedCourses === "string"
+//       ? recommendedCourses
+//       : "No courses recommended";
+
+//     // Upsert test results (create or update)
+//     await prisma.testResult.upsert({
+//       where: { userId: userIdInt },
+//       update: {
+//         score: Score,
+//         feedback: Feedback,
+//         recommendedCareer: careerString,
+//         recommendedCourses: coursesString,
+//       },
+//       create: {
+//         userId: userIdInt,
+//         score: Score,
+//         feedback: Feedback,
+//         recommendedCareer: careerString,
+//         recommendedCourses: coursesString,
+//       },
+//     });
+
+//     console.log("✅ Test results stored successfully");
+
+//     return res.status(200).json(
+//       new ApiResponse(
+//         true,
+//         200,
+//         {
+//           Score,
+//           Feedback,
+//           recommendedCareer: careerString,
+//           recommendedCourses: coursesString,
+//         },
+//         "Test results stored successfully"
+//       )
+//     );
+//   } catch (error) {
+//     console.error("Error storing test results:", error);
+//     return res
+//       .status(500)
+//       .json(new ApiResponse(false, 500, null, error.message));
+//   }
+// };
+// ✅ FIXED: Store test results directly in User table
+
+// export const getUserSkillsAndSummary = async (req, res) => {
+//   try {
+//     const userId = parseInt(req.query.userId, 10);
+
+//     if (Number.isNaN(userId)) {
+//       return res.status(400).json({ error: "Invalid userId format" });
+//     }
+
+//     const user = await prisma.user.findUnique({
+//       where: { id: userId },
+//       select: {
+//         id: true,
+//         name: true,
+//         email: true,
+//         resumeSummary: true,
+//         skills: true,
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // ✅ Parse skills back to array
+//     const skillsArray = user.skills ? JSON.parse(user.skills) : [];
+
+//     res.status(200).json({
+//       ...user,
+//       skills: skillsArray, // ✅ Return as array
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
 export const storeUserSkillsAndSummary = async (req, res) => {
   try {
-    const { userId: rawUserId, resumeSummary, skills } = req.body;
-    const userId = parseInt(rawUserId);
+    const { userId, skills, resumeSummary } = req.body;
 
-    if (!userId || !resumeSummary || !skills) {
-      return res.status(400).json({ error: "All fields are required" });
+    console.log("📥 Received request to store skills and summary");
+    console.log("User ID:", userId);
+    console.log("Skills count:", skills?.length);
+
+    const userIdInt = parseInt(userId, 10);
+
+    if (isNaN(userIdInt)) {
+      return res
+        .status(400)
+        .json(new ApiResponse(false, 400, null, "Invalid user ID"));
     }
 
+    if (!skills || !Array.isArray(skills) || skills.length === 0) {
+      return res
+        .status(400)
+        .json(new ApiResponse(false, 400, null, "Skills array is required"));
+    }
+
+    if (!resumeSummary || typeof resumeSummary !== "string") {
+      return res
+        .status(400)
+        .json(new ApiResponse(false, 400, null, "Resume summary is required"));
+    }
+
+    // ✅ FIX: Check if user exists first
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userIdInt },
+    });
+
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json(
+          new ApiResponse(
+            false,
+            404,
+            null,
+            `User with ID ${userIdInt} not found. Please log in again.`
+          )
+        );
+    }
+
+    // ✅ Now update the existing user
     const user = await prisma.user.update({
-      where: { id: userId },
+      where: { id: userIdInt },
       data: {
-        resumeSummary,
-        skills,
+        skills: skills,
+        resumeSummary: resumeSummary,
       },
     });
 
-    res.status(200).json({ message: "User skills & summary updated", user });
+    console.log("✅ Skills and summary stored successfully");
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          true,
+          200,
+          { skills: user.skills, summary: user.resumeSummary },
+          "Skills and summary stored successfully"
+        )
+      );
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    console.error("❌ Error storing skills and summary:", error);
+    return res
+      .status(500)
+      .json(new ApiResponse(false, 500, null, error.message));
+  }
+};
+
+
+
+export const storeTestResults = async (req, res) => {
+  try {
+    const {
+      userId,
+      Score,
+      Feedback,
+      "Recommended Career Path": recommendedCareer,
+      "Recommended Courses": recommendedCourses,
+    } = req.body;
+
+    console.log("📝 Storing test results for user:", userId);
+    console.log("Score:", Score);
+
+    const userIdInt = parseInt(userId, 10);
+
+    if (isNaN(userIdInt)) {
+      return res
+        .status(400)
+        .json(new ApiResponse(false, 400, null, "Invalid user ID"));
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userIdInt },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json(new ApiResponse(false, 404, null, "User not found"));
+    }
+
+    // Handle recommended career
+    const careerString = Array.isArray(recommendedCareer)
+      ? recommendedCareer.join(", ")
+      : recommendedCareer || "Not specified";
+
+    // Handle recommended courses
+    const coursesString = Array.isArray(recommendedCourses)
+      ? recommendedCourses.join(", ")
+      : typeof recommendedCourses === "string"
+      ? recommendedCourses
+      : "No courses recommended";
+
+    // ✅ Update User table directly (no separate TestResult table)
+    const updatedUser = await prisma.user.update({
+      where: { id: userIdInt },
+      data: {
+        testScore: Score,
+        testFeedback: Feedback,
+        recommendedCareer: careerString,
+        recommendedCourses: coursesString,
+      },
+    });
+
+    console.log("✅ Test results stored successfully in User table");
+
+    return res.status(200).json(
+      new ApiResponse(
+        true,
+        200,
+        {
+          testScore: updatedUser.testScore,
+          testFeedback: updatedUser.testFeedback,
+          recommendedCareer: updatedUser.recommendedCareer,
+          recommendedCourses: updatedUser.recommendedCourses,
+        },
+        "Test results stored successfully"
+      )
+    );
+  } catch (error) {
+    console.error("❌ Error storing test results:", error);
+    return res
+      .status(500)
+      .json(new ApiResponse(false, 500, null, error.message));
+  }
+};
+
+// ✅ FIXED: Get user data (no more testResults relation)
+export const getUserData = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    const userIdInt = parseInt(userId, 10);
+
+    if (isNaN(userIdInt)) {
+      return res
+        .status(400)
+        .json(new ApiResponse(false, 400, null, "Invalid user ID"));
+    }
+
+    // ✅ Query User table directly (no relations needed)
+    const user = await prisma.user.findUnique({
+      where: { id: userIdInt },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        skills: true,
+        resumeSummary: true,
+        testScore: true,        // ✅ Direct field
+        testFeedback: true,     // ✅ Direct field
+        recommendedCareer: true,    // ✅ Direct field
+        recommendedCourses: true,   // ✅ Direct field
+      },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json(new ApiResponse(false, 404, null, "User not found"));
+    }
+
+    // ✅ Access fields directly from user object
+    const responseData = {
+      testScore: user.testScore || null,
+      testFeedback: user.testFeedback || null,
+      recommendedCareer: user.recommendedCareer || null,
+      recommendedCourses: user.recommendedCourses || null,
+    };
+
+    console.log("📤 Sending user ", responseData);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(true, 200, responseData, "User data retrieved"));
+  } catch (error) {
+    console.error("Error fetching user ", error);
+    return res
+      .status(500)
+      .json(new ApiResponse(false, 500, null, error.message));
+  }
+};
+
+
+// Duplicate getUserData removed — the earlier getUserData implementation (which reads fields directly from the User table)
+// is the intended one to use; keep a single export named getUserData to avoid redeclaration errors.
+
+// Add this export to userController.js
+export const getUserById = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    
+    console.log("📊 Fetching user by ID:", userId);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Invalid userId format" 
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        resumeSummary: true,
+        skills: true,
+        testScore: true,
+        testFeedback: true,
+        recommendedCareer: true,
+        recommendedCourses: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: "User not found" 
+      });
+    }
+
+    console.log("✅ User found:", user);
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error("❌ Error fetching user:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Something went wrong" 
+    });
   }
 };
 
@@ -290,7 +800,7 @@ export const getUserSkillsAndSummary = async (req, res) => {
         name: true,
         email: true,
         resumeSummary: true,
-        skills: true,
+        skills: true, // ✅ Already an array, no parsing needed
       },
     });
 
@@ -298,6 +808,7 @@ export const getUserSkillsAndSummary = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // ✅ Return as-is (already an array)
     res.status(200).json(user);
   } catch (error) {
     console.error(error);
@@ -305,46 +816,3 @@ export const getUserSkillsAndSummary = async (req, res) => {
   }
 };
 
-
-export const storeTestResults = async (req, res) => {
-  try {
-    let {
-      userId,
-      Score,
-      Feedback,
-      "Recommended Career Path": recommendedCareer,
-      "Recommended Courses": recommendedCourses,
-    } = req.body;
-
-    // Convert userId to a number
-    userId = parseInt(userId, 10);
-    if (isNaN(userId)) {
-      return res.status(400).json({ error: "Invalid User ID format" });
-    }
-
-    // Find the user
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Store test results in the database
-    const testResult = await prisma.testResult.create({
-      data: {
-        userId,
-        score: Score,
-        strongSkills: Feedback["Strong Skills"],
-        weakSkills: Feedback["Weak Skills"],
-        recommendedCareer: recommendedCareer.join(", "),
-        recommendedCourses,
-      },
-    });
-
-    res
-      .status(201)
-      .json({ message: "Test results stored successfully", testResult });
-  } catch (error) {
-    console.error("Error storing test results:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};

@@ -1,150 +1,328 @@
-'use client';
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ChevronRight, Monitor, Layout, Briefcase, TrendingUp, BookOpen } from "lucide-react";
 
-import React, { useEffect, useState } from "react";
-import { BookOpen, ExternalLink, Play } from "lucide-react";
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-interface Course {
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  videoId: string;
-  url: string;
-}
+// Helper functions (same as before)
+const getProgressColorClass = (color: string) => {
+  switch(color) {
+    case 'green': return '[&>div]:bg-green-500';
+    case 'blue': return '[&>div]:bg-blue-500';
+    case 'purple': return '[&>div]:bg-purple-500';
+    default: return '[&>div]:bg-gray-500';
+  }
+};
 
-interface CareerData {
-  user: {
-    name: string;
-    email: string;
-    skills: string[];
-    summary: string;
+const getColorClasses = (color: string) => {
+  const colorMap: Record<string, { bg: string; text: string }> = {
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
+    purple: { bg: 'bg-purple-500/10', text: 'text-purple-500' },
+    green: { bg: 'bg-green-500/10', text: 'text-green-500' },
   };
-  recommendedCourses: Course[];
+  return colorMap[color] || { bg: 'bg-gray-500/10', text: 'text-gray-500' };
+};
+
+const getIconForCareer = (title: string) => {
+  if (title.toLowerCase().includes('developer') || title.toLowerCase().includes('engineer')) {
+    return Monitor;
+  } else if (title.toLowerCase().includes('design')) {
+    return Layout;
+  } else {
+    return Briefcase;
+  }
+};
+
+interface CareerGuidanceData {
+  skillsMatch: {
+    technicalSkills: number;
+    softSkills: number;
+    overallMatch: number;
+  };
+  recommendedPaths: Array<{
+    title: string;
+    match: number;
+    description: string;
+  }>;
+  industryDemand: {
+    jobOpeningsGrowth: number;
+    avgSalary: number;
+    growthRate: number;
+  };
+  industryInsights: {
+    trends: string;
+    requiredSkills: string[];
+  };
+  jobMarketLevels: Array<{
+    level: string;
+    percentage: number;
+  }>;
+  learningPath?: {
+    nextSkills: string[];
+    certifications: string[];
+    timelineMonths: number;
+  };
 }
 
-export default function Page() {
-  const [careerData, setCareerData] = useState<CareerData | null>(null);
+export default function CareerGuidance() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [careerData, setCareerData] = useState<CareerGuidanceData | null>(null);
 
   useEffect(() => {
-    const fetchCareerData = async () => {
+    const fetchCareerGuidance = async () => {
       try {
-        // Only run in client-side
-        if (typeof window !== 'undefined') {
-          const userId = localStorage.getItem("userId");
-          if (!userId) {
-            throw new Error("User ID not found");
-          }
-
-          const response = await fetch(`http://localhost:3001/api/career/get-videos?userId=${userId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to fetch career data");
-          }
-
-          const data = await response.json();
-          setCareerData(data);
+        const userId = localStorage.getItem("userId");
+        
+        if (!userId) {
+          router.push("/auth");
+          return;
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+
+        console.log("🎯 Fetching career guidance for user:", userId);
+
+        const response = await fetch(`${backendUrl}/career/guidance?userId=${userId}`, {
+          headers: { Authorization: userId }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("✅ Career guidance response:", result);
+
+        // Extract data from ApiResponse wrapper
+        const data = result.data || result;
+        setCareerData(data);
+        
+      } catch (error) {
+        console.error("❌ Error fetching career guidance:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCareerData();
-  }, []);
+    fetchCareerGuidance();
+  }, [router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading career guidance...</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!careerData) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-red-500 bg-red-100 px-4 py-2 rounded-lg">Error: {error}</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Card className="bg-gray-900 border-gray-800 text-white p-6">
+          <p>Unable to load career guidance. Please complete your assessment first.</p>
+        </Card>
       </div>
     );
   }
+
+  const { skillsMatch, recommendedPaths, industryDemand, industryInsights, jobMarketLevels, learningPath } = careerData;
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      {careerData && (
-        <div className="max-w-7xl mx-auto">
-          {/* User Profile Section */}
-          <div className="bg-gray-800 rounded-xl p-8 mb-8">
-            <h1 className="text-3xl font-bold text-white mb-4">Welcome, {careerData.user.name}!</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-black text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Career Guidance</h1>
+          <p className="text-gray-400">Your personalized career development insights</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Skills Match Card */}
+          <Card className="bg-gray-900 border-gray-800 text-white">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Skills Match</CardTitle>
+                <span className="text-3xl text-blue-500">
+                  {Math.round(skillsMatch.overallMatch)}%
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Technical Skills</span>
+                  <span>{skillsMatch.technicalSkills}%</span>
+                </div>
+                <Progress 
+                  value={skillsMatch.technicalSkills} 
+                  className="h-2 bg-gray-800 [&>div]:bg-blue-500" 
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Soft Skills</span>
+                  <span>{skillsMatch.softSkills}%</span>
+                </div>
+                <Progress 
+                  value={skillsMatch.softSkills} 
+                  className="h-2 bg-gray-800 [&>div]:bg-pink-500" 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recommended Paths Card */}
+          <Card className="bg-gray-900 border-gray-800 text-white">
+            <CardHeader>
+              <CardTitle>Recommended Careers</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {recommendedPaths.slice(0, 3).map((path, index) => {
+                const Icon = getIconForCareer(path.title);
+                const colors = getColorClasses(index === 0 ? 'blue' : index === 1 ? 'purple' : 'green');
+                return (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className={`p-2 ${colors.bg} rounded-lg`}>
+                        <Icon className={`h-5 w-5 ${colors.text}`} />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="font-medium">{path.title}</div>
+                        <div className="text-sm text-gray-400">{path.match}% match</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-500" />
+                  </div>
+                )})}
+            </CardContent>
+          </Card>
+
+          {/* Industry Demand Card */}
+          <Card className="bg-gray-900 border-gray-800 text-white">
+            <CardHeader>
+              <CardTitle>Industry Demand</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Job Openings</span>
+                <span className="text-green-500 font-semibold">↑ {industryDemand.jobOpeningsGrowth}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Average Salary</span>
+                <span className="text-green-500 font-semibold">${industryDemand.avgSalary.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Growth Rate</span>
+                <span className="text-green-500 font-semibold">↑ {industryDemand.growthRate}%</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Industry Insights Card */}
+          <Card className="bg-gray-900 border-gray-800 text-white md:col-span-1 lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Industry Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-gray-300 mb-2">Profile Summary</h2>
-                <p className="text-gray-400">{careerData.user.summary}</p>
+                <h3 className="text-lg font-semibold mb-2">Current Trends</h3>
+                <p className="text-gray-400">
+                  {industryInsights.trends}
+                </p>
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-300 mb-2">Skills</h2>
-                <div className="flex flex-wrap gap-2">
-                  {careerData.user.skills.map((skill, index) => (
-                    <span
+                <h3 className="text-lg font-semibold mb-3">In-Demand Skills</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {industryInsights.requiredSkills.map((skill, index) => (
+                    <Badge 
                       key={index}
-                      className="bg-blue-500 bg-opacity-20 text-blue-400 px-3 py-1 rounded-full text-sm"
+                      variant="secondary" 
+                      className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"
                     >
                       {skill}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Recommended Courses Section */}
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <BookOpen className="w-6 h-6" />
-              Recommended Courses
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {careerData.recommendedCourses.map((course, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-800 rounded-xl overflow-hidden transition-transform hover:scale-105"
-                >
-                  <div className="relative">
-                    <img
-                      src={course.thumbnailUrl}
-                      alt={course.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Play className="w-12 h-12 text-white" />
+          {/* Job Market Analysis Card */}
+          <Card className="bg-gray-900 border-gray-800 text-white">
+            <CardHeader>
+              <CardTitle>Job Market Levels</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {jobMarketLevels.map((level, index) => {
+                const colors = ['green', 'blue', 'purple'][index] || 'gray';
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{level.level}</span>
+                      <span className="font-semibold">{level.percentage}%</span>
                     </div>
+                    <Progress 
+                      value={level.percentage} 
+                      className={`h-2 bg-gray-800 ${getProgressColorClass(colors)}`} 
+                    />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-white mb-2">{course.title}</h3>
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{course.description}</p>
-                    <a
-                      href={course.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      Watch Now
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                )})}
+            </CardContent>
+          </Card>
+
+          {/* Learning Path Card */}
+          {learningPath && (
+            <Card className="bg-gray-900 border-gray-800 text-white lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Recommended Learning Path
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Next Skills to Learn</h3>
+                    <ul className="space-y-2">
+                      {learningPath.nextSkills.map((skill, index) => (
+                        <li key={index} className="flex items-center gap-2 text-gray-300">
+                          <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
+                          {skill}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Recommended Certifications</h3>
+                    <ul className="space-y-2">
+                      {learningPath.certifications.map((cert, index) => (
+                        <li key={index} className="flex items-center gap-2 text-gray-300">
+                          <span className="h-2 w-2 bg-purple-500 rounded-full"></span>
+                          {cert}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-4 text-sm text-gray-400">
+                      Estimated timeline: <span className="text-white font-semibold">{learningPath.timelineMonths} months</span>
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

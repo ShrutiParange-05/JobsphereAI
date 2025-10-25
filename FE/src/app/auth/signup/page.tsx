@@ -14,6 +14,24 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
+interface SignUpFormData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface SignUpResponse {
+  success: boolean;
+  data: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  message: string;
+}
+
 const Page = () => {
   const router = useRouter();
   const { toast } = useToast();
@@ -22,50 +40,54 @@ const Page = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormData>();
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-interface SignUpFormData {
-    name: string;
-    email: string;
-    password: string;
-}
-
-interface SignUpResponse {
-    message: string;
-    // Add other response fields if needed
-}
-
-const onSubmit = async (data: SignUpFormData) => {
+  const onSubmit = async (data: SignUpFormData) => {
     try {
-        const response = await axios.post<SignUpResponse>(`${backendUrl}/user/adduser`, {
-            name: data.name,
-            email: data.email,
-            password: data.password,
+      console.log("📤 Registering with:", data.name, data.email);
+
+      const response = await axios.post<SignUpResponse>(
+        `${backendUrl}/user/register`,
+        {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }
+      );
+
+      console.log("✅ Registration successful:", response.data);
+
+      if (response.status === 200 || response.status === 201) {
+        // Store user ID for later use
+        const userId = response.data.data.id;
+        localStorage.setItem("userId", userId.toString());
+
+        toast({
+          title: "Success",
+          description: "Account created successfully!",
         });
 
-        if (response.status === 200 || response.status === 201) {
-            toast({
-                title: "Success",
-                description: "Account created successfully!",
-            });
-            router.push("/auth/login");
-        }
+        // Redirect to resume upload instead of login
+        router.push("/assessment/resume");
+      }
     } catch (error: unknown) {
-        if (axios.isAxiosError(error)) {
-            toast({
-                title: "Error",
-                description: error.response?.data?.message || "Something went wrong",
-                variant: "destructive",
-            });
-        } else {
-            toast({
-                title: "Error",
-                description: "Something went wrong",
-                variant: "destructive",
-            });
-        }
+      console.error("❌ Registration error:", error);
+
+      if (axios.isAxiosError(error)) {
+        toast({
+          title: "Error",
+          description:
+            error.response?.data?.message || "Registration failed",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Something went wrong",
+          variant: "destructive",
+        });
+      }
     }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black p-4">
@@ -90,7 +112,9 @@ const onSubmit = async (data: SignUpFormData) => {
                 }`}
               />
               {errors.name && (
-                <p className="text-sm text-red-500">{errors.name?.message?.toString()}</p>
+                <p className="text-sm text-red-500">
+                  {errors.name?.message?.toString()}
+                </p>
               )}
             </div>
 
@@ -114,7 +138,9 @@ const onSubmit = async (data: SignUpFormData) => {
                 }`}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message?.toString()}</p>
+                <p className="text-sm text-red-500">
+                  {errors.email.message?.toString()}
+                </p>
               )}
             </div>
 
@@ -128,8 +154,8 @@ const onSubmit = async (data: SignUpFormData) => {
                 {...register("password", {
                   required: "Password is required",
                   minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters",
+                    value: 6,
+                    message: "Password must be at least 6 characters",
                   },
                 })}
                 placeholder="Enter your password"

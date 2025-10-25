@@ -1,27 +1,34 @@
 import { Router } from "express";
 import {
   createUser,
-  deleteUser,
   loginUser,
-  logoutUser,
   updateUser,
+  deleteUser,
+  logoutUser,
   storeUserSkillsAndSummary,
   getUserSkillsAndSummary,
   storeTestResults,
+  getUserData,
+  getUserById,
 } from "../controllers/userController.js";
-import { verifyJWT } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.post("/adduser", createUser);
+// Auth routes
+router.post("/register", createUser);
 router.post("/login", loginUser);
-router.post("/logout", verifyJWT, logoutUser);
-router.put("/update", verifyJWT, updateUser);
-router.delete("/delete", verifyJWT, deleteUser);
+router.put("/update", updateUser);
+router.delete("/delete", deleteUser);
+router.post("/logout", logoutUser);
 
+// Resume/Skills routes
 router.post("/storeUserSkillsAndSummary", storeUserSkillsAndSummary);
-router.post("/storeTestResults", storeTestResults);
-
 router.get("/getUserSkillsAndSummary", getUserSkillsAndSummary);
+
+// Test results routes
+router.post("/storeTestResults", storeTestResults);
+router.get("/getUserData", getUserData);
+router.get("/:id", getUserById);  
+
 
 export default router;

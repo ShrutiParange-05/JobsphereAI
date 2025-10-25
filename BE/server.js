@@ -5,8 +5,9 @@ import express from "express";
 import userRouter from "./routes/userRoutes.js";
 import jobrouter from "./routes/jobroutes.js"
 import cors from "cors";
+import testRouter from "./routes/testRoutes.js";
 import careerRouter from "./routes/careerRoutes.js";
-
+import resumeRoutes from "./routes/resumeRoutes.js";  // ← ADD THIS
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -24,8 +25,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/user", userRouter);
 app.use("/api/career", careerRouter);
-
-
+app.use("/api/test", testRouter); 
 app.use("/api/jobs", jobrouter);
+app.use("/api/resume", resumeRoutes);
 
 app.listen(PORT, () => console.log(`Server is running on PORT ${PORT}`));
