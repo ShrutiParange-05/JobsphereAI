@@ -1,0 +1,602 @@
+[
+    {
+        "ID": 1,
+        "Type": "Carousel",
+        "Likes": 69,
+        "Comments": 10,
+        "Saves": 29,
+        "Overall_Reach": 2300,
+        "Shares": 17,
+        "Impressions": 2488,
+        "CTR": 3.46,
+        "Engagement_Rate": 5.43,
+        "Posting_Time": 1,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 26,
+            "25-34": 26,
+            "35-44": 22
+        },
+        "Audience_Gender": {
+            "Male": 47,
+            "Female": 54
+        },
+        "Audience_Location": [
+            "Sydney",
+            "Delhi",
+            "New York"
+        ],
+        "Post_Date": "2024-01-02"
+    },
+    {
+        "ID": 2,
+        "Type": "Reels",
+        "Likes": 252,
+        "Comments": 24,
+        "Saves": 41,
+        "Overall_Reach": 2924,
+        "Shares": 40,
+        "Impressions": 3380,
+        "CTR": 0.92,
+        "Engagement_Rate": 12.21,
+        "Posting_Time": 6,
+        "Day_of_Week": "Weekday",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 20,
+            "25-34": 46,
+            "35-44": 23
+        },
+        "Audience_Gender": {
+            "Male": 44,
+            "Female": 57
+        },
+        "Audience_Location": [
+            "Paris",
+            "New York",
+            "New York"
+        ],
+        "Post_Date": "2024-01-03"
+    },
+    {
+        "ID": 3,
+        "Type": "Reels",
+        "Likes": 155,
+        "Comments": 29,
+        "Saves": 46,
+        "Overall_Reach": 1672,
+        "Shares": 11,
+        "Impressions": 2127,
+        "CTR": 2.21,
+        "Engagement_Rate": 14.41,
+        "Posting_Time": 3,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 26,
+            "25-34": 49,
+            "35-44": 16
+        },
+        "Audience_Gender": {
+            "Male": 53,
+            "Female": 48
+        },
+        "Audience_Location": [
+            "New York",
+            "New York",
+            "Delhi"
+        ],
+        "Post_Date": "2024-01-04"
+    },
+    {
+        "ID": 4,
+        "Type": "Carousel",
+        "Likes": 101,
+        "Comments": 12,
+        "Saves": 72,
+        "Overall_Reach": 1431,
+        "Shares": 34,
+        "Impressions": 1886,
+        "CTR": 1.75,
+        "Engagement_Rate": 15.3,
+        "Posting_Time": 10,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 31,
+            "25-34": 24,
+            "35-44": 6
+        },
+        "Audience_Gender": {
+            "Male": 50,
+            "Female": 41
+        },
+        "Audience_Location": [
+            "New York",
+            "Paris",
+            "London"
+        ],
+        "Post_Date": "2024-01-05"
+    },
+    {
+        "ID": 5,
+        "Type": "Reels",
+        "Likes": 117,
+        "Comments": 27,
+        "Saves": 24,
+        "Overall_Reach": 634,
+        "Shares": 25,
+        "Impressions": 1045,
+        "CTR": 8.13,
+        "Engagement_Rate": 30.44,
+        "Posting_Time": 20,
+        "Day_of_Week": "Weekend",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 16,
+            "25-34": 27,
+            "35-44": 17
+        },
+        "Audience_Gender": {
+            "Male": 50,
+            "Female": 51
+        },
+        "Audience_Location": [
+            "New York",
+            "London",
+            "Tokyo"
+        ],
+        "Post_Date": "2024-01-06"
+    },
+    {
+        "ID": 6,
+        "Type": "Carousel",
+        "Likes": 69,
+        "Comments": 9,
+        "Saves": 75,
+        "Overall_Reach": 2383,
+        "Shares": 30,
+        "Impressions": 2752,
+        "CTR": 2.25,
+        "Engagement_Rate": 7.68,
+        "Posting_Time": 11,
+        "Day_of_Week": "Weekend",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 13,
+            "25-34": 37,
+            "35-44": 15
+        },
+        "Audience_Gender": {
+            "Male": 54,
+            "Female": 56
+        },
+        "Audience_Location": [
+            "London",
+            "New York",
+            "Sydney"
+        ],
+        "Post_Date": "2024-01-07"
+    },
+    {
+        "ID": 7,
+        "Type": "Carousel",
+        "Likes": 65,
+        "Comments": 6,
+        "Saves": 77,
+        "Overall_Reach": 1442,
+        "Shares": 47,
+        "Impressions": 1576,
+        "CTR": 0.82,
+        "Engagement_Rate": 13.52,
+        "Posting_Time": 22,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 18,
+            "25-34": 24,
+            "35-44": 26
+        },
+        "Audience_Gender": {
+            "Male": 51,
+            "Female": 58
+        },
+        "Audience_Location": [
+            "Delhi",
+            "Sydney",
+            "Delhi"
+        ],
+        "Post_Date": "2024-01-08"
+    },
+    {
+        "ID": 8,
+        "Type": "Carousel",
+        "Likes": 239,
+        "Comments": 26,
+        "Saves": 77,
+        "Overall_Reach": 2425,
+        "Shares": 13,
+        "Impressions": 2695,
+        "CTR": 2.26,
+        "Engagement_Rate": 14.64,
+        "Posting_Time": 3,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 34,
+            "25-34": 31,
+            "35-44": 30
+        },
+        "Audience_Gender": {
+            "Male": 40,
+            "Female": 56
+        },
+        "Audience_Location": [
+            "Paris",
+            "Tokyo",
+            "Sydney"
+        ],
+        "Post_Date": "2024-01-09"
+    },
+    {
+        "ID": 9,
+        "Type": "Reels",
+        "Likes": 53,
+        "Comments": 1,
+        "Saves": 12,
+        "Overall_Reach": 2715,
+        "Shares": 48,
+        "Impressions": 3042,
+        "CTR": 2.17,
+        "Engagement_Rate": 4.2,
+        "Posting_Time": 15,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 20,
+            "25-34": 45,
+            "35-44": 15
+        },
+        "Audience_Gender": {
+            "Male": 59,
+            "Female": 47
+        },
+        "Audience_Location": [
+            "London",
+            "Delhi",
+            "Paris"
+        ],
+        "Post_Date": "2024-01-10"
+    },
+    {
+        "ID": 10,
+        "Type": "Carousel",
+        "Likes": 99,
+        "Comments": 28,
+        "Saves": 52,
+        "Overall_Reach": 2483,
+        "Shares": 8,
+        "Impressions": 2614,
+        "CTR": 1.22,
+        "Engagement_Rate": 7.53,
+        "Posting_Time": 1,
+        "Day_of_Week": "Weekday",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 20,
+            "25-34": 37,
+            "35-44": 26
+        },
+        "Audience_Gender": {
+            "Male": 46,
+            "Female": 49
+        },
+        "Audience_Location": [
+            "London",
+            "Sydney",
+            "Sydney"
+        ],
+        "Post_Date": "2024-01-11"
+    },
+    {
+        "ID": 11,
+        "Type": "Static Image",
+        "Likes": 146,
+        "Comments": 6,
+        "Saves": 74,
+        "Overall_Reach": 981,
+        "Shares": 37,
+        "Impressions": 1391,
+        "CTR": 5.1,
+        "Engagement_Rate": 26.81,
+        "Posting_Time": 14,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 40,
+            "25-34": 49,
+            "35-44": 8
+        },
+        "Audience_Gender": {
+            "Male": 51,
+            "Female": 53
+        },
+        "Audience_Location": [
+            "Sydney",
+            "Sydney",
+            "New York"
+        ],
+        "Post_Date": "2024-01-12"
+    },
+    {
+        "ID": 12,
+        "Type": "Carousel",
+        "Likes": 227,
+        "Comments": 37,
+        "Saves": 24,
+        "Overall_Reach": 1948,
+        "Shares": 37,
+        "Impressions": 2151,
+        "CTR": 2.6,
+        "Engagement_Rate": 16.68,
+        "Posting_Time": 5,
+        "Day_of_Week": "Weekend",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 15,
+            "25-34": 33,
+            "35-44": 9
+        },
+        "Audience_Gender": {
+            "Male": 54,
+            "Female": 52
+        },
+        "Audience_Location": [
+            "Tokyo",
+            "Delhi",
+            "Delhi"
+        ],
+        "Post_Date": "2024-01-13"
+    },
+    {
+        "ID": 13,
+        "Type": "Reels",
+        "Likes": 166,
+        "Comments": 4,
+        "Saves": 41,
+        "Overall_Reach": 1799,
+        "Shares": 37,
+        "Impressions": 2146,
+        "CTR": 2.61,
+        "Engagement_Rate": 13.79,
+        "Posting_Time": 19,
+        "Day_of_Week": "Weekend",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 38,
+            "25-34": 40,
+            "35-44": 5
+        },
+        "Audience_Gender": {
+            "Male": 44,
+            "Female": 54
+        },
+        "Audience_Location": [
+            "Sydney",
+            "Delhi",
+            "London"
+        ],
+        "Post_Date": "2024-01-14"
+    },
+    {
+        "ID": 14,
+        "Type": "Static Image",
+        "Likes": 158,
+        "Comments": 21,
+        "Saves": 71,
+        "Overall_Reach": 1203,
+        "Shares": 41,
+        "Impressions": 1558,
+        "CTR": 5.91,
+        "Engagement_Rate": 24.19,
+        "Posting_Time": 13,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 33,
+            "25-34": 34,
+            "35-44": 23
+        },
+        "Audience_Gender": {
+            "Male": 47,
+            "Female": 54
+        },
+        "Audience_Location": [
+            "London",
+            "Delhi",
+            "New York"
+        ],
+        "Post_Date": "2024-01-15"
+    },
+    {
+        "ID": 15,
+        "Type": "Carousel",
+        "Likes": 202,
+        "Comments": 15,
+        "Saves": 57,
+        "Overall_Reach": 1189,
+        "Shares": 48,
+        "Impressions": 1569,
+        "CTR": 4.02,
+        "Engagement_Rate": 27.08,
+        "Posting_Time": 0,
+        "Day_of_Week": "Weekday",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 10,
+            "25-34": 35,
+            "35-44": 30
+        },
+        "Audience_Gender": {
+            "Male": 43,
+            "Female": 45
+        },
+        "Audience_Location": [
+            "Delhi",
+            "London",
+            "New York"
+        ],
+        "Post_Date": "2024-01-16"
+    },
+    {
+        "ID": 16,
+        "Type": "Reels",
+        "Likes": 178,
+        "Comments": 40,
+        "Saves": 35,
+        "Overall_Reach": 2890,
+        "Shares": 35,
+        "Impressions": 3180,
+        "CTR": 1.54,
+        "Engagement_Rate": 9.97,
+        "Posting_Time": 11,
+        "Day_of_Week": "Weekday",
+        "Device": "Mobile",
+        "Audience_Age_Groups": {
+            "18-24": 35,
+            "25-34": 33,
+            "35-44": 12
+        },
+        "Audience_Gender": {
+            "Male": 52,
+            "Female": 54
+        },
+        "Audience_Location": [
+            "Sydney",
+            "Tokyo",
+            "New York"
+        ],
+        "Post_Date": "2024-01-17"
+    },
+    {
+        "ID": 17,
+        "Type": "Reels",
+        "Likes": 99,
+        "Comments": 9,
+        "Saves": 11,
+        "Overall_Reach": 2017,
+        "Shares": 28,
+        "Impressions": 2160,
+        "CTR": 4.49,
+        "Engagement_Rate": 7.29,
+        "Posting_Time": 19,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 16,
+            "25-34": 26,
+            "35-44": 11
+        },
+        "Audience_Gender": {
+            "Male": 56,
+            "Female": 46
+        },
+        "Audience_Location": [
+            "London",
+            "Tokyo",
+            "London"
+        ],
+        "Post_Date": "2024-01-18"
+    },
+    {
+        "ID": 18,
+        "Type": "Static Image",
+        "Likes": 270,
+        "Comments": 16,
+        "Saves": 64,
+        "Overall_Reach": 1612,
+        "Shares": 35,
+        "Impressions": 1794,
+        "CTR": 3.46,
+        "Engagement_Rate": 23.88,
+        "Posting_Time": 1,
+        "Day_of_Week": "Weekday",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 18,
+            "25-34": 46,
+            "35-44": 7
+        },
+        "Audience_Gender": {
+            "Male": 57,
+            "Female": 40
+        },
+        "Audience_Location": [
+            "Paris",
+            "Tokyo",
+            "Sydney"
+        ],
+        "Post_Date": "2024-01-19"
+    },
+    {
+        "ID": 19,
+        "Type": "Static Image",
+        "Likes": 198,
+        "Comments": 14,
+        "Saves": 11,
+        "Overall_Reach": 2310,
+        "Shares": 6,
+        "Impressions": 2420,
+        "CTR": 1.69,
+        "Engagement_Rate": 9.91,
+        "Posting_Time": 14,
+        "Day_of_Week": "Weekend",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 24,
+            "25-34": 22,
+            "35-44": 12
+        },
+        "Audience_Gender": {
+            "Male": 52,
+            "Female": 45
+        },
+        "Audience_Location": [
+            "London",
+            "Paris",
+            "Tokyo"
+        ],
+        "Post_Date": "2024-01-20"
+    },
+    {
+        "ID": 20,
+        "Type": "Reels",
+        "Likes": 236,
+        "Comments": 31,
+        "Saves": 53,
+        "Overall_Reach": 1545,
+        "Shares": 34,
+        "Impressions": 1705,
+        "CTR": 3.99,
+        "Engagement_Rate": 22.91,
+        "Posting_Time": 5,
+        "Day_of_Week": "Weekend",
+        "Device": "Desktop",
+        "Audience_Age_Groups": {
+            "18-24": 18,
+            "25-34": 34,
+            "35-44": 29
+        },
+        "Audience_Gender": {
+            "Male": 59,
+            "Female": 46
+        },
+        "Audience_Location": [
+            "Tokyo",
+            "Delhi",
+            "Delhi"
+        ],
+        "Post_Date": "2024-01-21"
+    }
+]
