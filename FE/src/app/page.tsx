@@ -17,7 +17,7 @@ const LandingPage = () => {
         <AnalyticsFeaturesSection id="features" />
         <HowItWorks id="how-it-works" />
         <MetricsDashboard id="metrics" />
-        {/* <TeamSection id="team" /> */}
+        <TeamSection id="team" />
         <FAQAndFooter id="faq" />
       </main>
     </div>
