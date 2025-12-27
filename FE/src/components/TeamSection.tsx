@@ -129,7 +129,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({ id }) => {
       name: "Sanika Zagade",
       role: "Web Developer & Graphic Designer",
       graduation: "TEC'26",
-      imageUrl: "/sanika.jpeg",
+      imageUrl: "/sanika1.png",
       linkedinUrl: "https://www.linkedin.com/in/sanika-zagade0729/",
       githubUrl: "https://github.com/Sanika0729",
     },
@@ -138,7 +138,7 @@ const TeamSection: React.FC<TeamSectionProps> = ({ id }) => {
       role: "Data Analyst",
       graduation: "TEC'26",
       imageUrl: "/sarika1.jpg",
-      linkedinUrl: "https://www.linkedin.com/in/sarika-katkar/",
+      linkedinUrl: "https://www.linkedin.com/in/sarika-katkar-b15816286/",
       githubUrl: "https://github.com/SarikaKatkar",
     },
   ];
