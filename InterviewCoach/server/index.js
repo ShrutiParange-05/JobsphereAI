@@ -52,7 +52,8 @@ app.post("/generate-voice", async (req, res) => {
   console.log("text", text);
 
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-exp",
+    // model: "gemini-3-flash-preview",
+    model: "gemini-3-flash-preview",
     systemInstruction: `You are an AI interviewer Saarthi AI designed to conduct mock job interviews for candidates applying for a ${role}.  
 Your job is to ask relevant, structured, and engaging questions, adapting dynamically based on the candidate’s responses.  
 
@@ -141,10 +142,11 @@ Before we begin, could you introduce yourself and tell me a little about your ba
     });
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error:", error.message);
+    console.error("Full error:", error);
     res.status(500).json({
       success: false,
-      error: "Error generating response or voice"
+      error: error.message || "Error generating response or voice"
     });
   }
 });

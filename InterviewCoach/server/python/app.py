@@ -1,3 +1,19 @@
+import os
+
+# Fix for macOS Metal (MPS) conflict:
+# Force TensorFlow to use CPU to avoid "mutex lock failed" crash when running alongside PyTorch.
+# This MUST operate before any other imports load the heavy ML libraries.
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # Standard way to hide GPU from TF
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0" 
+
+try:
+    import tensorflow as tf
+    # Ensure TF doesn't try to use Metal
+    tf.config.set_visible_devices([], 'GPU')
+except Exception:
+    pass
+
 from flask import Flask, render_template, Response, jsonify
 from flask_cors import CORS
 import cv2

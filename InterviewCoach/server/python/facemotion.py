@@ -1,5 +1,21 @@
 import cv2
-from deepface import DeepFace
+import os
+import logging
+
+# Filter out TensorFlow/Abseil warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['ABSL_LOG_LEVEL'] = 'error'
+
+try:
+    import tensorflow as tf
+    # Hide GPU/Metal devices from TensorFlow to prevent conflicts with PyTorch/MPS
+    # and avoid the "mutex.cc : 452" lock blocking error on macOS.
+    tf.config.set_visible_devices([], 'GPU')
+    print("✅ TensorFlow forced to CPU to avoid MPS conflict")
+except Exception as e:
+    pass
+
+# from deepface import DeepFace
 
 # Load face cascade classifier
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -21,6 +37,7 @@ def detect_emotion(frame):
             face_roi = rgb_frame[y:y + h, x:x + w]
             
             # Analyze emotion
+            from deepface import DeepFace
             result = DeepFace.analyze(face_roi, actions=['emotion'], enforce_detection=False)
             emotion = result[0]['dominant_emotion']
             

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Globe, Mic, MicOff, MessageSquare, User, Brain, Camera } from "lucide-react";
+import { Globe, Mic, MicOff, MessageSquare, User, Brain, Camera, Briefcase } from "lucide-react";
 
 
 export const InterviewCoach = () => {
@@ -9,6 +9,20 @@ export const InterviewCoach = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [aiResponse, setAiResponse] = useState("");
     const [messages, setMessages] = useState([]);
+    const [selectedRole, setSelectedRole] = useState("Software Engineer");
+
+    const roleOptions = [
+        "Software Engineer",
+        "Frontend Developer",
+        "Backend Developer",
+        "Full Stack Developer",
+        "Data Analyst",
+        "Data Scientist",
+        "Machine Learning Engineer",
+        "Product Manager",
+        "DevOps Engineer",
+        "QA Engineer"
+    ];
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
     const userId = "user123";
@@ -24,8 +38,18 @@ export const InterviewCoach = () => {
             window.SpeechRecognition)();
         recognition.lang = "en-US";
         recognition.continuous = true;
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognitionRef.current = recognition;
+
+        recognition.onstart = () => {
+            console.log("Speech recognition started");
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            alert(`Microphone error: ${event.error}. Please allow microphone access.`);
+            setIsListening(false);
+        };
 
         recognition.onresult = (event) => {
             let text = "";
@@ -33,6 +57,7 @@ export const InterviewCoach = () => {
                 text += event.results[i][0].transcript + " ";
             }
             setTranscribedText(text.trim());
+            console.log("Transcribed:", text.trim());
         };
 
         recognition.start();
@@ -50,42 +75,42 @@ export const InterviewCoach = () => {
         }
     };
 
-      const generateVoice = async (text) => {
+    const generateVoice = async (text) => {
         if (!text) return;
-    
+
         try {
-            const response = await fetch("http://localhost:5000/generate-voice", {
+            const response = await fetch("http://localhost:5001/generate-voice", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ userId, text, role: "data analyst" }),
+                body: JSON.stringify({ userId, text, role: selectedRole }),
             });
-            
+
             const data = await response.json();
-            
+
             // Convert base64 to binary using browser API
             const binaryString = atob(data.audio);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
             }
-            
+
             const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
             const url = URL.createObjectURL(audioBlob);
-            
+
             setAudioUrl(url);
             setAiResponse(data.text);
             setMessages(prev => [...prev, { type: 'ai', text: data.text, timestamp: new Date() }]);
             setIsPlaying(true);
-            
+
             const audio = new Audio(url);
             audioRef.current = audio;
-            
+
             audio.onended = () => {
                 setIsPlaying(false);
             };
-            
+
             audio.play();
         } catch (error) {
             console.error("Error generating voice:", error);
@@ -102,6 +127,22 @@ export const InterviewCoach = () => {
                         <div className="text-center mb-8">
                             <h1 className="text-4xl font-bold text-white mb-2 font-heading">Saarthi AI</h1>
                             <p className="text-white font-light">Practice your interview skills with real-time AI feedback</p>
+
+                            {/* Role Selector */}
+                            <div className="mt-4 flex items-center justify-center gap-3">
+                                <Briefcase className="w-5 h-5 text-blue-400" />
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                >
+                                    {roleOptions.map((role) => (
+                                        <option key={role} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         {/* Main Interface */}
@@ -112,13 +153,12 @@ export const InterviewCoach = () => {
                                     <Brain className="w-4 h-4" />
                                     <span>AI Assistant</span>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-center h-64">
                                     <div className="relative">
-                                        <Globe 
-                                            className={`w-32 h-32 ${
-                                                isPlaying ? 'text-blue-500' : 'text-blue-200'
-                                            } transition-colors duration-300`} 
+                                        <Globe
+                                            className={`w-32 h-32 ${isPlaying ? 'text-blue-500' : 'text-blue-200'
+                                                } transition-colors duration-300`}
                                         />
                                         {isPlaying && (
                                             <div className="absolute inset-0 flex items-center justify-center">
@@ -135,8 +175,8 @@ export const InterviewCoach = () => {
                                     <button
                                         onClick={isListening ? handleDoneSpeaking : startListening}
                                         className={`px-6 py-3 rounded-full font-medium text-white transition-all duration-300 flex items-center gap-3 shadow-md
-                                            ${isListening 
-                                                ? "bg-red-500 hover:bg-red-600" 
+                                            ${isListening
+                                                ? "bg-red-500 hover:bg-red-600"
                                                 : "bg-blue-500 hover:bg-blue-600"
                                             }`}
                                     >
@@ -162,7 +202,7 @@ export const InterviewCoach = () => {
                                     <h3 className="text-blue-900 font-medium">Video Feed</h3>
                                 </div>
                                 <div className="aspect-video bg-blue-50 rounded-xl overflow-hidden">
-                                    <img 
+                                    <img
                                         src="http://localhost:6500/video_feed1"
                                         alt="Webcam Feed"
                                         className="w-full h-full object-cover"
@@ -179,16 +219,15 @@ export const InterviewCoach = () => {
                                 <MessageSquare className="w-5 h-5 text-blue-500" />
                                 <h3 className="text-blue-900 font-medium">Interview Conversation</h3>
                             </div>
-                            <div 
+                            <div
                                 ref={chatContainerRef}
                                 className="space-y-4 h-[calc(100vh-8rem)] overflow-y-auto pr-4 custom-scrollbar"
                             >
                                 {messages.map((message, index) => (
-                                    <div 
-                                        key={index} 
-                                        className={`bg-blue-50 rounded-lg p-4 ${
-                                            message.type === 'user' ? 'border-l-2 border-blue-500' : 'border-l-2 border-blue-400'
-                                        }`}
+                                    <div
+                                        key={index}
+                                        className={`bg-blue-50 rounded-lg p-4 ${message.type === 'user' ? 'border-l-2 border-blue-500' : 'border-l-2 border-blue-400'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2 mb-2">
                                             {message.type === 'user' ? (
