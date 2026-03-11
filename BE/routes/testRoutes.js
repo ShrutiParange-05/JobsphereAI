@@ -1,9 +1,13 @@
 import { Router } from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
+import os from "os";
+const OLLAMA_URL = "http://localhost:11434/api/generate";
+const OLLAMA_MODEL = "llama3.2";
+const MAX_THREADS = os.cpus().length;
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const router = Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 
 // Helper function to clean AI response
 function cleanAIResponse(responseText) {
@@ -43,7 +47,7 @@ router.post('/generate_skill_test', async (req, res) => {
     const skillsText = Array.isArray(skills) ? skills.join(', ') : skills;
     console.log('📝 Generating test for:', skillsText.substring(0, 100) + '...');
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+
 
     const prompt = `Create a CHALLENGING 10-question MCQ test for this candidate:
 
@@ -71,8 +75,18 @@ Return ONLY valid JSON:
   "TotalQuestions": 10
 }`;
 
-    const result = await model.generateContent(prompt);
-    const responseText = cleanAIResponse(result.response.text());
+    console.log('🤖 Sending to Ollama for test generation...');
+    const result = await axios.post(OLLAMA_URL, {
+      model: OLLAMA_MODEL,
+      prompt: prompt,
+      stream: false,
+      format: "json",
+      options: {
+        num_thread: MAX_THREADS
+      }
+    });
+    
+    const responseText = cleanAIResponse(result.data.response);
 
     const parsedResponse = JSON.parse(responseText);
     
@@ -108,7 +122,7 @@ router.post('/check_test', async (req, res) => {
       `Q${idx + 1}: ${ans.question}\nSelected: ${ans.selected}\nCorrect: ${ans.correct}`
     ).join('\n\n');
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+
 
     const prompt = `Evaluate this test:
 
@@ -130,8 +144,17 @@ Return ONLY valid JSON:
   "IntegrityScore": ${violations > 3 ? 50 : violations > 0 ? 75 : 100}
 }`;
 
-    const result = await model.generateContent(prompt);
-    const responseText = cleanAIResponse(result.response.text());
+    console.log('🤖 Sending to Ollama for test evaluation...');
+    const result = await axios.post(OLLAMA_URL, {
+      model: OLLAMA_MODEL,
+      prompt: prompt,
+      stream: false,
+      format: "json",
+      options: {
+        num_thread: MAX_THREADS
+      }
+    });
+    const responseText = cleanAIResponse(result.data.response);
 
     const parsedResponse = JSON.parse(responseText);
     console.log('✅ Score:', parsedResponse.Score + '%');

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Globe, Mic, MicOff, MessageSquare, User, Brain, Camera, Briefcase } from "lucide-react";
+import { Globe, Mic, MicOff, MessageSquare, User, Brain, Camera, Briefcase, RotateCcw } from "lucide-react";
 
 
 export const InterviewCoach = () => {
@@ -117,6 +117,28 @@ export const InterviewCoach = () => {
         }
     };
 
+    const resetConversation = async () => {
+        try {
+            const response = await fetch("http://localhost:5001/reset-conversation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ userId }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                setMessages([]);
+                setTranscribedText("");
+                setAiResponse("");
+                alert("Interview conversation has been reset!");
+            }
+        } catch (error) {
+            console.error("Error resetting conversation:", error);
+            alert("Failed to reset conversation");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#242424]">
             <div className="container mx-auto px-4 py-6">
@@ -142,6 +164,14 @@ export const InterviewCoach = () => {
                                         </option>
                                     ))}
                                 </select>
+                                <button
+                                    onClick={resetConversation}
+                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                    title="Reset Interview"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Reset
+                                </button>
                             </div>
                         </div>
 

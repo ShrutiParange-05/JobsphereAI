@@ -1,7 +1,8 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const axios = require("axios");
+const os = require("os");
+const MAX_THREADS = os.cpus().length;
 const dotenv = require("dotenv");
 const express = require("express");
-const axios = require("axios");
 // const { Server } = require("socket.io");
 const http = require("http");
 // const connectMongoDB = require("./connection");
@@ -34,7 +35,8 @@ const apiKey = process.env.GEMINI_API_KEY;
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
 const VOICE_ID = process.env.VOICE_ID;
 
-const genAI = new GoogleGenerativeAI(apiKey);
+const OLLAMA_URL = "http://localhost:11434/api/chat";
+const OLLAMA_MODEL = "llama3.2";
 
 // Store the conversation history for each user session
 const userHistories = {};
@@ -46,15 +48,36 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
+// Reset conversation history endpoint
+app.post("/reset-conversation", (req, res) => {
+  const { userId } = req.body;
+  if (userId) {
+    delete userHistories[userId];
+    console.log(`Conversation reset for user: ${userId}`);
+    res.json({ success: true, message: `Conversation reset for user ${userId}` });
+  } else {
+    // Reset all conversations
+    Object.keys(userHistories).forEach(key => delete userHistories[key]);
+    console.log("All conversations reset");
+    res.json({ success: true, message: "All conversations reset" });
+  }
+});
+
+
 app.post("/generate-voice", async (req, res) => {
   const { userId, text, role } = req.body;
   console.log("userId", userId);
   console.log("text", text);
 
-  const model = genAI.getGenerativeModel({
-    // model: "gemini-3-flash-preview",
-    model: "gemini-3-flash-preview",
-    systemInstruction: `You are an AI interviewer Saarthi AI designed to conduct mock job interviews for candidates applying for a ${role}.  
+  // Retrieve or initialize the user's history
+  const userHistory = userHistories[userId] || [];
+  console.log("userHistory", userHistory);
+
+  try {
+    const messages = [
+      {
+        role: "system",
+        content: `You are an AI interviewer Saarthi AI designed to conduct mock job interviews for candidates applying for a ${role}.  
 Your job is to ask relevant, structured, and engaging questions, adapting dynamically based on the candidate’s responses.  
 
 ### Interview Flow:
@@ -82,32 +105,26 @@ Your job is to ask relevant, structured, and engaging questions, adapting dynami
 - If a candidate struggles, encourage them politely instead of pressuring them.  
 
 ### Example Opening:  
-"Hello, I’m SarthiAI, and I’ll be your interviewer today. Thank you for taking the time for this mock interview. This session will include a mix of technical and behavioral questions to assess your skills for the [ROLE] position.  
-Before we begin, could you introduce yourself and tell me a little about your background?"
-`,
-  });
+"Hello, I’m SarthiAI, and I’ll be your interviewer today. Thank you for taking the time for this mock interview. This session will include a mix of technical and behavioral questions to assess your skills for the ${role} position.  
+Before we begin, could you introduce yourself and tell me a little about your background?"`
+      },
+      ...userHistory.map(h => ({
+        role: h.role === "model" ? "assistant" : h.role,
+        content: h.parts[0].text
+      })),
+      { role: "user", content: text }
+    ];
 
-  const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseMimeType: "text/plain",
-  };
-
-  // Retrieve or initialize the user's history
-  const userHistory = userHistories[userId] || [];
-  console.log("userHistory", userHistory);
-
-  try {
-    // Generate AI response
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [...userHistory, { role: "user", parts: [{ text }] }],
+    const ollamaResponse = await axios.post(OLLAMA_URL, {
+      model: OLLAMA_MODEL,
+      messages: messages,
+      stream: false,
+      options: {
+        num_thread: MAX_THREADS
+      }
     });
 
-    const result = await chatSession.sendMessage(text);
-    let aiResponse = result.response.text();
+    let aiResponse = ollamaResponse.data.message.content;
     aiResponse = aiResponse.replace(/[^a-zA-Z0-9 ]/g, "");
 
     // Update conversation history

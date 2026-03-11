@@ -1,6 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
+import os from "os";
+const OLLAMA_URL = "http://localhost:11434/api/generate";
+const OLLAMA_MODEL = "llama3.2";
+const MAX_THREADS = os.cpus().length;
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 // Import pdf-parse correctly
@@ -23,8 +27,7 @@ const upload = multer({
   }
 });
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 
 router.post('/upload', upload.single('resume'), async (req, res) => {
   try {
@@ -50,8 +53,7 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
       throw new Error('No text content found in PDF');
     }
 
-    // Use Gemini AI
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+
 
     const prompt = `You are a professional resume analyzer. Extract skills and generate a concise professional summary from this resume text.
 
@@ -66,10 +68,18 @@ IMPORTANT: Return ONLY valid JSON. No markdown, no code blocks, no explanation. 
 
 Extract 10-20 relevant technical and professional skills.`;
 
-    console.log('🤖 Sending to Gemini AI for analysis...');
+    console.log('🤖 Sending to Ollama AI for analysis...');
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response.text();
+    const result = await axios.post(OLLAMA_URL, {
+      model: OLLAMA_MODEL,
+      prompt: prompt,
+      stream: false,
+      format: "json",
+      options: {
+        num_thread: MAX_THREADS
+      }
+    });
+    let responseText = result.data.response;
     
     console.log('📝 Raw AI response:', responseText.substring(0, 200) + '...');
     

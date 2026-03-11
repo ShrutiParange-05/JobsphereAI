@@ -587,6 +587,28 @@ export const storeUserSkillsAndSummary = async (req, res) => {
         )
       );
   } catch (error) {
+    if (error.message && error.message.includes("read-only transaction")) {
+      const { userId, skills, resumeSummary } = req.body;
+      const userIdInt = parseInt(userId, 10);
+      
+      if (!global.fallbackCache) global.fallbackCache = {};
+      global.fallbackCache[userIdInt] = {
+        ...(global.fallbackCache[userIdInt] || {}),
+        skills,
+        resumeSummary,
+      };
+
+      console.log("⚠️ DB is Read-Only. Stored skills & summary in memory fallback cache.");
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          200,
+          { skills, summary: resumeSummary },
+          "Skills and summary stored in fallback successfully"
+        )
+      );
+    }
+    
     console.error("❌ Error storing skills and summary:", error);
     return res
       .status(500)
@@ -666,6 +688,29 @@ export const storeTestResults = async (req, res) => {
       )
     );
   } catch (error) {
+    if (error.message && error.message.includes("read-only transaction")) {
+      const { userId, Score, Feedback, "Recommended Career Path": recommendedCareer, "Recommended Courses": recommendedCourses } = req.body;
+      const userIdInt = parseInt(userId, 10);
+      
+      const careerString = Array.isArray(recommendedCareer) ? recommendedCareer.join(", ") : recommendedCareer || "Not specified";
+      const coursesString = Array.isArray(recommendedCourses) ? recommendedCourses.join(", ") : typeof recommendedCourses === "string" ? recommendedCourses : "No courses recommended";
+
+      // Store in fallback cache
+      if (!global.fallbackCache) global.fallbackCache = {};
+      global.fallbackCache[userIdInt] = {
+        ...(global.fallbackCache[userIdInt] || {}),
+        testScore: Score,
+        testFeedback: Feedback,
+        recommendedCareer: careerString,
+        recommendedCourses: coursesString,
+      };
+      
+      console.log("⚠️ DB is Read-Only. Stored test results in memory fallback cache.");
+      return res.status(200).json(
+        new ApiResponse(true, 200, global.fallbackCache[userIdInt], "Test results stored in fallback successfully")
+      );
+    }
+
     console.error("❌ Error storing test results:", error);
     return res
       .status(500)
@@ -708,12 +753,16 @@ export const getUserData = async (req, res) => {
         .json(new ApiResponse(false, 404, null, "User not found"));
     }
 
+    // Overlay memory fallback data if any exists
+    if (!global.fallbackCache) global.fallbackCache = {};
+    const fallbackUser = global.fallbackCache[userIdInt] || {};
+
     // ✅ Access fields directly from user object
     const responseData = {
-      testScore: user.testScore || null,
-      testFeedback: user.testFeedback || null,
-      recommendedCareer: user.recommendedCareer || null,
-      recommendedCourses: user.recommendedCourses || null,
+      testScore: fallbackUser.testScore !== undefined ? fallbackUser.testScore : (user.testScore || null),
+      testFeedback: fallbackUser.testFeedback !== undefined ? fallbackUser.testFeedback : (user.testFeedback || null),
+      recommendedCareer: fallbackUser.recommendedCareer !== undefined ? fallbackUser.recommendedCareer : (user.recommendedCareer || null),
+      recommendedCourses: fallbackUser.recommendedCourses !== undefined ? fallbackUser.recommendedCourses : (user.recommendedCourses || null),
     };
 
     console.log("📤 Sending user ", responseData);
@@ -770,11 +819,22 @@ export const getUserById = async (req, res) => {
       });
     }
 
-    console.log("✅ User found:", user);
+    const fallbackUser = global.fallbackCache?.[userId] || {};
+    const finalUser = {
+      ...user,
+      skills: fallbackUser.skills !== undefined ? fallbackUser.skills : user.skills,
+      resumeSummary: fallbackUser.resumeSummary !== undefined ? fallbackUser.resumeSummary : user.resumeSummary,
+      testScore: fallbackUser.testScore !== undefined ? fallbackUser.testScore : user.testScore,
+      testFeedback: fallbackUser.testFeedback !== undefined ? fallbackUser.testFeedback : user.testFeedback,
+      recommendedCareer: fallbackUser.recommendedCareer !== undefined ? fallbackUser.recommendedCareer : user.recommendedCareer,
+      recommendedCourses: fallbackUser.recommendedCourses !== undefined ? fallbackUser.recommendedCourses : user.recommendedCourses,
+    };
+
+    console.log("✅ User found:", finalUser);
 
     res.status(200).json({
       success: true,
-      data: user
+      data: finalUser
     });
   } catch (error) {
     console.error("❌ Error fetching user:", error);
@@ -808,8 +868,15 @@ export const getUserSkillsAndSummary = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    const fallbackUser = global.fallbackCache?.[userId] || {};
+    const finalUser = {
+      ...user,
+      skills: fallbackUser.skills !== undefined ? fallbackUser.skills : user.skills,
+      resumeSummary: fallbackUser.resumeSummary !== undefined ? fallbackUser.resumeSummary : user.resumeSummary,
+    };
+
     // ✅ Return as-is (already an array)
-    res.status(200).json(user);
+    res.status(200).json(finalUser);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Something went wrong" });

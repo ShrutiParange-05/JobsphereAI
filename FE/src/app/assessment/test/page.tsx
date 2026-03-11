@@ -427,7 +427,7 @@ const Page = () => {
       {/* Question */}
       <div className="max-w-4xl mx-auto bg-gray-800 rounded-lg p-6">
         <div className="mb-4 flex gap-2">
-          {currentQuestion.Difficulty && (
+          {currentQuestion?.Difficulty && (
             <span className={`px-2 py-1 rounded text-xs ${
               currentQuestion.Difficulty === 'easy' ? 'bg-green-500/20 text-green-400' :
               currentQuestion.Difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -436,17 +436,17 @@ const Page = () => {
               {currentQuestion.Difficulty}
             </span>
           )}
-          {currentQuestion.Skill && (
+          {currentQuestion?.Skill && (
             <span className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">
               {currentQuestion.Skill}
             </span>
           )}
         </div>
 
-        <h2 className="text-lg font-semibold mb-6 whitespace-pre-wrap">{currentQuestion.Question}</h2>
+        <h2 className="text-lg font-semibold mb-6 whitespace-pre-wrap">{currentQuestion?.Question}</h2>
 
         <div className="space-y-3">
-          {currentQuestion.Options.map((option, index) => (
+          {currentQuestion?.Options?.map((option, index) => (
             <button
               key={index}
               onClick={() => handleAnswer(option)}
