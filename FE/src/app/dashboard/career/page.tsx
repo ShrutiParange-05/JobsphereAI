@@ -4,7 +4,33 @@ import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Monitor, Layout, Briefcase, TrendingUp, BookOpen } from "lucide-react";
+import { ChevronRight, Monitor, Layout, Briefcase, TrendingUp, BookOpen, Sparkles, Zap, Award } from "lucide-react";
+import { motion } from "framer-motion";
+import { ScrollReveal } from "@/components/scroll-wrapper";
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as any, stiffness: 100, damping: 15 }
+  }
+};
+
+const PremiumCard = ({ children, className = "", delay = 0, hoverEffect = true }: any) => (
+  <motion.div
+    variants={itemVariants}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: "-50px" }}
+    whileHover={hoverEffect ? { y: -5, transition: { duration: 0.2 } } : {}}
+    className={`bg-gray-900/40 backdrop-blur-xl border border-gray-800/60 shadow-2xl rounded-2xl overflow-hidden relative group ${className}`}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+    {children}
+  </motion.div>
+);
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
@@ -112,11 +138,19 @@ export default function CareerGuidance() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white">Loading career guidance...</p>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center">
+        <div className="relative">
+          {/* Outer glow ring */}
+          <div className="absolute inset-0 rounded-full blur-xl bg-cyan-500/30 animate-pulse"></div>
+          {/* Main spinner */}
+          <div className="relative w-16 h-16 border-4 border-gray-800 border-t-cyan-500 rounded-full animate-spin shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
+          {/* Inner pulsating dot */}
+          <div className="absolute inset-0 m-auto w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
         </div>
+        <h2 className="mt-8 text-xl font-medium tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 animate-pulse">
+          Loading Career Guidance
+        </h2>
+        <p className="mt-2 text-sm text-gray-500">Preparing your personalized insights...</p>
       </div>
     );
   }
@@ -136,14 +170,22 @@ export default function CareerGuidance() {
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Career Guidance</h1>
-          <p className="text-gray-400">Your personalized career development insights</p>
-        </div>
+        <ScrollReveal delay={100}>
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Sparkles className="h-6 w-6 text-blue-500" />
+              </div>
+              <h1 className="text-4xl font-bold">Career Guidance</h1>
+            </div>
+            <p className="text-gray-400 text-lg">Your personalized career development insights</p>
+          </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Skills Match Card */}
-          <Card className="bg-gray-900 border-gray-800 text-white">
+          <ScrollReveal delay={200}>
+            <PremiumCard className="text-white h-full">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Skills Match</CardTitle>
@@ -174,10 +216,12 @@ export default function CareerGuidance() {
                 />
               </div>
             </CardContent>
-          </Card>
+          </PremiumCard>
+          </ScrollReveal>
 
           {/* Recommended Paths Card */}
-          <Card className="bg-gray-900 border-gray-800 text-white">
+          <ScrollReveal delay={300}>
+            <PremiumCard className="text-white h-full">
             <CardHeader>
               <CardTitle>Recommended Careers</CardTitle>
             </CardHeader>
@@ -203,10 +247,12 @@ export default function CareerGuidance() {
                   </div>
                 )})}
             </CardContent>
-          </Card>
+          </PremiumCard>
+          </ScrollReveal>
 
           {/* Industry Demand Card */}
-          <Card className="bg-gray-900 border-gray-800 text-white">
+          <ScrollReveal delay={400}>
+            <PremiumCard className="text-white h-full">
             <CardHeader>
               <CardTitle>Industry Demand</CardTitle>
             </CardHeader>
@@ -224,10 +270,12 @@ export default function CareerGuidance() {
                 <span className="text-green-500 font-semibold">↑ {industryDemand.growthRate}%</span>
               </div>
             </CardContent>
-          </Card>
+          </PremiumCard>
+          </ScrollReveal>
 
           {/* Industry Insights Card */}
-          <Card className="bg-gray-900 border-gray-800 text-white md:col-span-1 lg:col-span-2">
+          <ScrollReveal delay={500}>
+            <PremiumCard className="text-white md:col-span-1 lg:col-span-2 h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
@@ -256,10 +304,12 @@ export default function CareerGuidance() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </PremiumCard>
+          </ScrollReveal>
 
           {/* Job Market Analysis Card */}
-          <Card className="bg-gray-900 border-gray-800 text-white">
+          <ScrollReveal delay={600}>
+            <PremiumCard className="text-white h-full">
             <CardHeader>
               <CardTitle>Job Market Levels</CardTitle>
             </CardHeader>
@@ -279,47 +329,89 @@ export default function CareerGuidance() {
                   </div>
                 )})}
             </CardContent>
-          </Card>
+          </PremiumCard>
+          </ScrollReveal>
 
           {/* Learning Path Card */}
           {learningPath && (
-            <Card className="bg-gray-900 border-gray-800 text-white lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Recommended Learning Path
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Next Skills to Learn</h3>
-                    <ul className="space-y-2">
-                      {learningPath.nextSkills.map((skill, index) => (
-                        <li key={index} className="flex items-center gap-2 text-gray-300">
-                          <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
-                          {skill}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Recommended Certifications</h3>
-                    <ul className="space-y-2">
-                      {learningPath.certifications.map((cert, index) => (
-                        <li key={index} className="flex items-center gap-2 text-gray-300">
-                          <span className="h-2 w-2 bg-purple-500 rounded-full"></span>
-                          {cert}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-4 text-sm text-gray-400">
-                      Estimated timeline: <span className="text-white font-semibold">{learningPath.timelineMonths} months</span>
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="lg:col-span-3">
+              <ScrollReveal delay={700}>
+                <PremiumCard className="text-white overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] -z-10" />
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px] -z-10" />
+                  
+                  <CardHeader className="pb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                          <BookOpen className="h-5 w-5 text-white" />
+                        </div>
+                        Recommended Learning Path
+                      </CardTitle>
+                      <div className="px-4 py-1.5 bg-gray-800/80 border border-gray-700/50 rounded-full text-sm font-bold text-gray-300 backdrop-blur-md whitespace-nowrap">
+                        ⏱ <span className="text-indigo-400">{learningPath.timelineMonths} Months</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-6 pt-4">
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      {/* Next Skills */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-amber-400" />
+                          <h3 className="text-sm font-black text-white uppercase tracking-widest">Next Skills</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {learningPath.nextSkills.map((skill, index) => (
+                            <motion.div 
+                              key={index}
+                              whileHover={{ x: 4 }}
+                              className="group flex items-center gap-3 p-3 bg-gray-800/30 border border-gray-700/30 rounded-xl hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all cursor-default"
+                            >
+                              <div className="h-2 w-2 flex-shrink-0 rounded-full bg-indigo-500 shadow-[0_0_6px_rgba(99,102,241,0.6)]" />
+                              <span className="text-gray-300 text-sm font-semibold group-hover:text-white transition-colors leading-tight">{skill}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Certifications */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Award className="h-4 w-4 text-emerald-400" />
+                          <h3 className="text-sm font-black text-white uppercase tracking-widest">Target Certifications</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {learningPath.certifications.map((cert, index) => (
+                            <motion.div 
+                              key={index}
+                              whileHover={{ x: 4 }}
+                              className="group flex items-center gap-3 p-3 bg-gray-800/20 border border-gray-700/40 rounded-xl hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all cursor-default"
+                            >
+                              <div className="p-1.5 bg-emerald-500/10 rounded-lg flex-shrink-0 group-hover:bg-emerald-500/20 transition-all">
+                                <Sparkles className="h-3 w-3 text-emerald-500" />
+                              </div>
+                              <span className="text-gray-300 text-sm font-semibold group-hover:text-white transition-colors leading-tight flex-1 min-w-0">{cert}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gradient-to-r from-indigo-900/20 via-purple-900/10 to-transparent border border-indigo-500/20 rounded-2xl relative overflow-hidden group/tip">
+                      <div className="absolute top-0 right-0 p-3 opacity-10 group-hover/tip:opacity-20 transition-opacity">
+                        <TrendingUp size={60} className="text-indigo-500" />
+                      </div>
+                      <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Pro Tip</p>
+                      <p className="text-gray-300 text-sm leading-relaxed relative z-10">
+                        Focusing on these certifications can increase your market value by an estimated <span className="text-white font-bold">25–30%</span> within the next year.
+                      </p>
+                    </div>
+                  </CardContent>
+                </PremiumCard>
+              </ScrollReveal>
+            </div>
           )}
         </div>
       </div>

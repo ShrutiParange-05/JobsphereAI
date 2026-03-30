@@ -1,13 +1,27 @@
 import cv2
+import os
 import torch
 from ultralytics import YOLO
 
-# Load YOLOv8 model
-model = YOLO("yolov8s.pt")
+# Force PyTorch to CPU only
+os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
+if torch.backends.mps.is_available():
+    torch.set_default_device('cpu')
+
+# Lazy-loaded model
+_model = None
+
+def get_yolo_model():
+    global _model
+    if _model is None:
+        _model = YOLO("yolov8s.pt")
+        _model.to('cpu')
+    return _model
 
 def detect_phone_and_person(frame, conf_threshold=0.5):
     try:
-        results = model(frame)[0]
+        model = get_yolo_model()
+        results = model(frame, device='cpu')[0]
         detections = []
         
         for r in results.boxes:

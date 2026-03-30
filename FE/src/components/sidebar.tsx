@@ -26,30 +26,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node)
-      ) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    // Mobile overlay click in layout.tsx handles closing when clicking outside on small screens.
+    // Desktop should not close when clicking main content as it is a toggleable static drawer.
   }, [isOpen, onClose]);
 
   return (
     <div
       ref={sidebarRef}
       className={cn(
-        "fixed md:relative min-h-screen w-60 bg-slate-950",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        "fixed top-0 left-0 z-40 h-screen w-60 bg-slate-950 transition-transform duration-300 ease-in-out border-r border-gray-900",
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
       <div className="space-y-4 py-4">

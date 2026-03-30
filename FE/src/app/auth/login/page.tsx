@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import axios, { AxiosError } from "axios";
@@ -38,6 +38,7 @@ data: {
 const Page = () => {
   const { toast } = useToast();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const {
     register,
     handleSubmit,
@@ -55,6 +56,7 @@ const Page = () => {
       );
 
       if (response.status === 200 || response.status === 201) {
+        setIsRedirecting(true);
         const { user, accessToken } = response.data.data;
 
         // Store user data and token in localStorage
@@ -82,17 +84,34 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <>
+      {(isRedirecting || isSubmitting) && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
+          <div className="relative">
+            {/* Outer glow ring */}
+            <div className="absolute inset-0 rounded-full blur-xl bg-cyan-500/30 animate-pulse"></div>
+            {/* Main spinner */}
+            <div className="relative w-16 h-16 border-4 border-gray-800 border-t-cyan-500 rounded-full animate-spin shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
+            {/* Inner pulsating dot */}
+            <div className="absolute inset-0 m-auto w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+          </div>
+          <h2 className="mt-8 text-xl font-medium tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 animate-pulse">
+            Authenticating
+          </h2>
+          <p className="mt-2 text-sm text-gray-500">Preparing your personalized dashboard...</p>
+        </div>
+      )}
+    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+      <Card className="w-full max-w-md bg-gray-900 text-white border-gray-800 shadow-2xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-2xl font-bold text-center text-white">
             Login to Your Account
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-200">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -104,7 +123,7 @@ const Page = () => {
                   },
                 })}
                 placeholder="Enter your email"
-                className={errors.email ? "border-red-500" : ""}
+                className={`bg-gray-800 text-white placeholder:text-gray-500 border-gray-700 focus:border-cyan-500 focus:ring-cyan-500 ${errors.email ? "border-red-500" : ""}`}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">
@@ -114,7 +133,7 @@ const Page = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-gray-200">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -126,7 +145,7 @@ const Page = () => {
                   },
                 })}
                 placeholder="Enter your password"
-                className={errors.password ? "border-red-500" : ""}
+                className={`bg-gray-800 text-white placeholder:text-gray-500 border-gray-700 focus:border-cyan-500 focus:ring-cyan-500 ${errors.password ? "border-red-500" : ""}`}
               />
               {errors.password && (
                 <p className="text-sm text-red-500">
@@ -135,21 +154,22 @@ const Page = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-700 text-white transition-all transform hover:scale-[1.02]" disabled={isSubmitting}>
               {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center">
-          <div className="text-sm text-gray-600">
-            Dont have an account?{" "}
-            <Link href="/auth/signup" className="text-blue-600 hover:underline">
+        <CardFooter className="justify-center border-t border-gray-800 pt-6">
+          <div className="text-sm text-gray-400">
+            Don't have an account?{" "}
+            <Link href="/auth/signup" className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors font-medium">
               Create an account here
             </Link>
           </div>
         </CardFooter>
       </Card>
     </div>
+    </>
   );
 };
 

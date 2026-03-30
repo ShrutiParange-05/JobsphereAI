@@ -26,6 +26,32 @@ import {
   Brain,
   RefreshCw
 } from 'lucide-react';
+import { motion } from "framer-motion";
+import { ScrollReveal } from "@/components/scroll-wrapper";
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as any, stiffness: 100, damping: 15 }
+  }
+};
+
+const PremiumCard = ({ children, className = "", hoverEffect = true }: any) => (
+  <motion.div
+    variants={itemVariants}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: "-50px" }}
+    whileHover={hoverEffect ? { y: -5, transition: { duration: 0.2 } } : {}}
+    className={`bg-gray-900/40 backdrop-blur-xl border border-gray-800/60 shadow-2xl rounded-2xl overflow-hidden relative group ${className}`}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+    {children}
+  </motion.div>
+);
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
@@ -164,15 +190,17 @@ const LearningPathPage = () => {
       const isHigh = needsImprovement.includes(skill);
       const isMedium = moderate.includes(skill);
       
+      const priority: 'high' | 'medium' | 'low' = isHigh ? 'high' : isMedium ? 'medium' : 'low';
+      
       return {
         skill,
-        priority: isHigh ? 'high' : isMedium ? 'medium' : 'low',
+        priority,
         currentLevel: Math.max(10, testScore - (index % 20)),
         targetLevel: 90,
         resources: generateResourcesForSkill(skill, index)
       };
     }).sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
   };
@@ -444,8 +472,9 @@ const LearningPathPage = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+        <ScrollReveal delay={100}>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <PremiumCard className="border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.1)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -454,10 +483,10 @@ const LearningPathPage = () => {
                 </div>
                 <Target className="h-10 w-10 text-purple-400 opacity-50" />
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </PremiumCard>
 
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <PremiumCard className="border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -466,10 +495,10 @@ const LearningPathPage = () => {
                 </div>
                 <BookOpen className="h-10 w-10 text-blue-400 opacity-50" />
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </PremiumCard>
 
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+            <PremiumCard className="border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -478,10 +507,10 @@ const LearningPathPage = () => {
                 </div>
                 <CheckCircle2 className="h-10 w-10 text-green-400 opacity-50" />
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </PremiumCard>
 
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+            <PremiumCard className="border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -490,30 +519,32 @@ const LearningPathPage = () => {
                 </div>
                 <Bookmark className="h-10 w-10 text-yellow-400 opacity-50" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </PremiumCard>
+          </div>
+        </ScrollReveal>
 
         {/* Filters */}
-        <Card className="bg-gray-900/50 border-gray-700">
+        <ScrollReveal delay={200}>
+          <PremiumCard className="bg-gray-900/50 border-gray-700">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4 items-center justify-between">
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant={selectedSkill === 'all' ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setSelectedSkill('all')}
-                  className={selectedSkill === 'all' ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-600 hover:bg-gray-800'}
+                  className={selectedSkill === 'all' ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                 >
                   All Skills
                 </Button>
                 {learningPaths.slice(0, 5).map(path => (
                   <Button
                     key={path.skill}
-                    variant={selectedSkill === path.skill ? 'default' : 'outline'}
+                    variant="ghost"
                     size="sm"
                     onClick={() => setSelectedSkill(path.skill)}
-                    className={selectedSkill === path.skill ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-600 hover:bg-gray-800'}
+                    className={selectedSkill === path.skill ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                   >
                     {path.skill}
                   </Button>
@@ -522,36 +553,36 @@ const LearningPathPage = () => {
 
               <div className="flex gap-2">
                 <Button
-                  variant={filter === 'all' ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilter('all')}
-                  className={filter === 'all' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
+                  className={filter === 'all' ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                 >
                   All Types
                 </Button>
                 <Button
-                  variant={filter === 'video' ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilter('video')}
-                  className={filter === 'video' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
+                  className={filter === 'video' ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                 >
                   <Youtube className="h-4 w-4 mr-1" />
                   Videos
                 </Button>
                 <Button
-                  variant={filter === 'article' ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilter('article')}
-                  className={filter === 'article' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
+                  className={filter === 'article' ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                 >
                   <FileText className="h-4 w-4 mr-1" />
                   Articles
                 </Button>
                 <Button
-                  variant={filter === 'course' ? 'default' : 'outline'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFilter('course')}
-                  className={filter === 'course' ? 'bg-purple-600 hover:bg-purple-700' : 'border-gray-600 hover:bg-gray-800'}
+                  className={filter === 'course' ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20' : 'border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white'}
                 >
                   <GraduationCap className="h-4 w-4 mr-1" />
                   Courses
@@ -559,15 +590,16 @@ const LearningPathPage = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </PremiumCard>
+        </ScrollReveal>
 
         {/* Learning Paths */}
         {filteredPaths.map((path, pathIndex) => (
-          <Card 
-            key={path.skill} 
-            className="bg-gray-900/80 border-gray-700 animate-fade-in backdrop-blur-sm"
-            style={{ animationDelay: `${pathIndex * 100}ms` }}
-          >
+          <ScrollReveal key={path.skill} delay={300 + pathIndex * 100}>
+            <PremiumCard 
+              className="bg-gray-900/80 border-gray-700 backdrop-blur-sm"
+              hoverEffect={false}
+            >
             <CardHeader className="border-b border-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -681,7 +713,8 @@ const LearningPathPage = () => {
                   ))}
               </div>
             </CardContent>
-          </Card>
+          </PremiumCard>
+        </ScrollReveal>
         ))}
 
         {/* Empty State */}
