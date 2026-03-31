@@ -416,7 +416,7 @@ export default function CandidatesPage() {
                       </>
                     ) : (
                       <>
-                        <Zap className="w-5 h-5" /> Analyze Candidate 🔥
+                        <Zap className="w-5 h-5" /> Analyze Candidate
                       </>
                     )}
                   </button>
