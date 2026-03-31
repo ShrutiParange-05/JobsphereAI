@@ -124,23 +124,44 @@ router.post('/check_test', async (req, res) => {
 
 
 
-    const prompt = `Evaluate this test:
+    const correctCount = answers.filter(a => a.selected === a.correct).length;
+    const rawScore = Math.round((correctCount / answers.length) * 100);
 
-PROFILE: ${profile_summary}
-RESULTS: ${answersText}
+    const prompt = `You are an expert evaluator. Analyze these test answers and generate a personalized assessment.
+
+CANDIDATE PROFILE: ${profile_summary}
+
+TEST ANSWERS (${answers.length} total):
+${answersText}
+
+CORRECT ANSWERS: ${correctCount} out of ${answers.length}
 TIME SPENT: ${Math.floor(timeSpent / 60)} minutes
-VIOLATIONS: ${violations}
+INTEGRITY VIOLATIONS: ${violations}
 
-Return ONLY valid JSON:
+Generate a response where:
+- Score must be exactly ${rawScore}
+- Write specific, personalized 3-4 sentence feedback mentioning the candidate's actual skills
+- List 2-3 genuine specific strengths observed from correct answers
+- List 2-3 real specific weak areas based on wrong answers
+- Recommend a SPECIFIC career path (e.g., "Full Stack Developer", "Data Scientist", "DevOps Engineer")
+- Recommend 3 REAL, SPECIFIC courses with actual names and platforms. Examples of good course names:
+  * "The Complete JavaScript Course - Jonas Schmedtmann (Udemy)"
+  * "CS50: Introduction to Computer Science - Harvard (edX)"
+  * "Python for Data Science and Machine Learning Bootcamp (Udemy)"
+  * "AWS Certified Developer Associate Course (A Cloud Guru)"
+  * "The Web Developer Bootcamp by Colt Steele (Udemy)"
+  Use courses relevant to the candidate's skills and weak areas.
+
+Return ONLY valid JSON with no extra text:
 {
-  "Score": 85,
-  "CorrectAnswers": 8,
-  "TotalQuestions": 10,
-  "Feedback": "3-4 sentence performance feedback",
-  "Strengths": ["Strength 1", "Strength 2"],
-  "WeakAreas": ["Area 1", "Area 2"],
-  "Recommended Career Path": "Career recommendation",
-  "Recommended Courses": ["Course 1", "Course 2", "Course 3"],
+  "Score": ${rawScore},
+  "CorrectAnswers": ${correctCount},
+  "TotalQuestions": ${answers.length},
+  "Feedback": "<specific personalized feedback referencing their actual tech stack>",
+  "Strengths": ["<specific strength based on correct answers>", "<specific strength 2>"],
+  "WeakAreas": ["<specific weak area from wrong answers>", "<specific weak area 2>"],
+  "Recommended Career Path": "<specific career title relevant to their profile>",
+  "Recommended Courses": ["<Real Course Name - Platform>", "<Real Course Name - Platform>", "<Real Course Name - Platform>"],
   "IntegrityScore": ${violations > 3 ? 50 : violations > 0 ? 75 : 100}
 }`;
 

@@ -354,16 +354,82 @@ const Page = () => {
     submitTestWithAnswers(answers);
   };
 
+  const loadingMessages = [
+    "Analyzing your skills profile...",
+    "Crafting personalized questions...",
+    "Calibrating difficulty levels...",
+    "Building your unique test...",
+    "Almost ready — hang tight!",
+  ];
+  const [msgIndex, setMsgIndex] = React.useState(0);
+  React.useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setMsgIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading test...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
+        <div className="text-center max-w-sm px-6">
+          {/* Orbital spinner */}
+          <div className="relative w-28 h-28 mx-auto mb-8">
+            {/* Outer orbit ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-blue-500/20 animate-spin" style={{ animationDuration: '3s' }} />
+            {/* Middle orbit ring */}
+            <div className="absolute inset-3 rounded-full border-2 border-purple-500/30 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+            {/* Inner glow */}
+            <div className="absolute inset-6 rounded-full bg-blue-500/10 animate-pulse" />
+            {/* Center icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <svg className="w-5 h-5 text-white animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.5 3.5 0 01-4.95 0l-.347-.347z" />
+                </svg>
+              </div>
+            </div>
+            {/* Orbiting dot */}
+            <div className="absolute inset-0 animate-spin" style={{ animationDuration: '1.8s' }}>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-3 h-3 rounded-full bg-blue-400 shadow-md shadow-blue-400/60" />
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Generating Your Test
+          </h2>
+
+          {/* Rotating tip message */}
+          <div className="h-8 overflow-hidden mb-6">
+            <p
+              key={msgIndex}
+              className="text-gray-400 text-sm animate-in fade-in slide-in-from-bottom-2 duration-500"
+            >
+              {loadingMessages[msgIndex]}
+            </p>
+          </div>
+
+          {/* Animated progress bar */}
+          <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 rounded-full animate-pulse"
+              style={{ width: '100%', backgroundSize: '200% 100%', animation: 'shimmer 2s infinite linear' }}
+            />
+          </div>
+          <p className="text-xs text-gray-600 mt-3">Please wait while we generate a personalised test</p>
         </div>
+
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}</style>
       </div>
     );
   }
+
 
   if (error) {
     return (

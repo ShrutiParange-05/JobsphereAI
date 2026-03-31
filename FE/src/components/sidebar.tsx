@@ -9,20 +9,34 @@ import {
   X,
   Lightbulb,
   Brain,
+  UserSearch,
+  FileText,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const navItems = [
+  { label: "Overview", icon: LayoutDashboard, path: "/dashboard" },
+  { label: "Career Insights", icon: Zap, path: "/dashboard/career" },
+  { label: "Job Match AI", icon: Users2, path: "/dashboard/jobs" },
+  { label: "Skill Analytics", icon: BarChart3, path: "/dashboard/skills" },
+  { label: "Learning Path", icon: Lightbulb, path: "/dashboard/learn" },
+  { label: "Candidate Analyzer", icon: UserSearch, path: "/dashboard/candidates" },
+  { label: "Resume Optimizer", icon: FileText, path: "/dashboard/resume-optimizer" },
+  { label: "AI Mock Interviewer", icon: Brain, path: "http://localhost:5173/", external: true },
+];
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,54 +70,31 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         <div className="px-3">
           <div className="space-y-1">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white hover:bg-gray-800"
-              onClick={() => router.push("/dashboard")}
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Overview
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-400 hover:bg-gray-800 hover:text-white"
-              onClick={() => router.push("/dashboard/career")}
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Career Insights
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-400 hover:bg-gray-800 hover:text-white"
-              onClick={() => router.push("/dashboard/jobs")}
-            >
-              <Users2 className="mr-2 h-4 w-4" />
-              Job Match AI
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-400 hover:bg-gray-800 hover:text-white"
-              onClick={() => router.push("/dashboard/skills")}
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Skill Analytics
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-400 hover:bg-gray-800 hover:text-white"
-              onClick={() => router.push("/dashboard/learn")}
-            >
-              <Lightbulb className="mr-2 h-4 w-4" />
-              Learning Path
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-400 hover:bg-gray-800 hover:text-white"
-              onClick={() => router.push("http://localhost:5173/")}
-            >
-              <Brain className="mr-2 h-4 w-4" />
-              AI Mock Interviewer
-            </Button>
+            {navItems.map((item) => {
+              const isActive = !item.external && pathname === item.path;
+              return (
+                <Button
+                  key={item.label}
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start transition-all duration-200",
+                    isActive
+                      ? "text-white bg-gray-800/80 shadow-lg shadow-cyan-500/5"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  )}
+                  onClick={() => {
+                    if (item.external) {
+                      window.open(item.path, "_blank");
+                    } else {
+                      router.push(item.path);
+                    }
+                  }}
+                >
+                  <item.icon className={cn("mr-2 h-4 w-4", isActive && "text-cyan-400")} />
+                  {item.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>

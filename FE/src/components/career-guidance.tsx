@@ -7,7 +7,7 @@ import { ScrollReveal } from "@/components/scroll-wrapper";
 import { ChevronRight, Monitor, Layout, Briefcase, TrendingUp, BookOpen, Loader2, Award } from "lucide-react";
 import { motion } from "framer-motion";
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:3001/api";
 
 // Helper function for progress bar colors
 const getProgressColorClass = (color: string) => {

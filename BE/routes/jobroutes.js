@@ -177,7 +177,7 @@ async function fetchFromSkillApi(jobTitle, location) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ job_title: jobTitle, location }),
-    }, 15000); // Give Render API up to 15s to wake up
+    }, 35000); // Give Render API up to 35s to wake up
     if (!response.ok) throw new Error(`SkillAPI error: ${response.status}`);
     const data = await response.json();
     const jobs = (data.jobs || []).map((job) => normalizeJob({ ...job, source: "Google Jobs" }));

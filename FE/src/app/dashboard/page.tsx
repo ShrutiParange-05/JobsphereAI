@@ -31,7 +31,7 @@ function AnimatedValue({ value, suffix = "" }: { value: number | string, suffix?
   return <>{count}{suffix}</>;
 }
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:3001/api";
 
 interface UserData {
   testScore: number | null;

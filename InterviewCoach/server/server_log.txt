@@ -1,0 +1,13 @@
+─────────────────────────────────────────────
+🚀 Saarthi AI Server running on port 5001
+🧠 Using Gemini API for interview responses
+─────────────────────────────────────────────
+📩 User system_test_123: "Hello, are you there?"
+🆕 New chat session created for system_test_123 (Software Engineer)
+🤖 AI: "Hello, I am Saarthi AI, and I will be your interviewer today. Thank you for joining this mock interv..."
+📩 User user123_new: "Can you hear me?"
+🆕 New chat session created for user123_new (Software Engineer)
+🤖 AI: "Yes, I can hear you clearly. Hello, I am Saarthi AI, and I will be your interviewer today. Thank you..."
+📩 User user123: "hello"
+🆕 New chat session created for user123 (Software Engineer)
+🤖 AI: "Hello, I am Saarthi AI, and I will be your interviewer today. Thank you for taking the time to join ..."

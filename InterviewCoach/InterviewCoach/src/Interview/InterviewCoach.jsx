@@ -26,6 +26,8 @@ export const InterviewCoach = () => {
   const [messages, setMessages] = useState([]);
   const [selectedRole, setSelectedRole] = useState("Software Engineer");
   const [isConnected, setIsConnected] = useState(true);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [interviewStarted, setInterviewStarted] = useState(false);
 
   const roleOptions = [
     "Software Engineer",
@@ -111,6 +113,7 @@ export const InterviewCoach = () => {
       setIsPlaying(true);
 
       if (data.audio) {
+        console.log("🎙️ Playing high-quality ElevenLabs voice...");
         const binaryString = atob(data.audio);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
@@ -122,8 +125,9 @@ export const InterviewCoach = () => {
         const audio = new Audio(url);
         audioRef.current = audio;
         audio.onended = () => setIsPlaying(false);
-        audio.play();
+        audio.play().catch(e => console.error("Audio play failed:", e));
       } else {
+        console.log("⚠️ Falling back to robotic browser voice...");
         const utterance = new SpeechSynthesisUtterance(data.text);
         utterance.onend = () => setIsPlaying(false);
         window.speechSynthesis.speak(utterance);
@@ -210,6 +214,41 @@ export const InterviewCoach = () => {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
+            {/* Camera Toggle */}
+            <button
+              onClick={() => setIsCameraOn(!isCameraOn)}
+              className={`flex items-center gap-2 px-4 py-2.5 backdrop-blur border text-sm font-semibold rounded-xl transition-all duration-300 ${
+                isCameraOn 
+                ? "bg-gray-800/60 border-gray-700/50 text-gray-300 hover:bg-gray-700/60" 
+                : "bg-red-500/10 border-red-500/50 text-red-400 hover:bg-red-500/20"
+              }`}
+            >
+              {isCameraOn ? <Camera className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+              {isCameraOn ? "Camera On" : "Camera Off"}
+            </button>
+
+            {/* Stop/Start Button */}
+            <button
+              onClick={() => {
+                if(interviewStarted) {
+                  if(confirm("End current interview?")) {
+                    setInterviewStarted(false);
+                    resetConversation();
+                  }
+                } else {
+                  setInterviewStarted(true);
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 backdrop-blur border text-sm font-semibold rounded-xl transition-all duration-300 ${
+                interviewStarted 
+                ? "bg-red-500/10 border-red-500/50 text-red-400 hover:bg-red-500/20" 
+                : "bg-blue-500/10 border-blue-500/50 text-blue-400 hover:bg-blue-500/20"
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              {interviewStarted ? "Stop Interview" : "Start Interview"}
+            </button>
+
             {/* Reset Button */}
             <button
               onClick={resetConversation}
@@ -231,11 +270,18 @@ export const InterviewCoach = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 {/* Card Badge */}
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="p-1.5 bg-blue-500/10 rounded-lg">
-                    <Sparkles className="w-4 h-4 text-blue-400" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-500/10 rounded-lg">
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <span className="text-sm font-bold text-white uppercase tracking-widest leading-none">AI Avatar</span>
                   </div>
-                  <span className="text-sm font-bold text-white uppercase tracking-widest leading-none">AI Avatar</span>
+                  {/* High Quality Voice Badge */}
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 rounded-full">
+                    <Activity className="w-3 h-3 text-orange-400" />
+                    <span className="text-[10px] font-black text-orange-400 uppercase tracking-tighter">Premium Voice</span>
+                  </div>
                 </div>
 
                 {/* Globe / Avatar */}
@@ -317,19 +363,28 @@ export const InterviewCoach = () => {
 
                 <div className="aspect-video bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800/50 relative flex-1 min-h-[300px]">
                   {/* Fallback when camera not connected */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-0">
-                    <Camera className="w-12 h-12 text-gray-700" />
-                    <p className="text-gray-600 text-sm font-medium">Camera Feed</p>
-                    <p className="text-gray-700 text-xs">Start the Python server to activate</p>
-                  </div>
-                  <img
-                    src="http://localhost:6500/video_feed1"
-                    alt="Webcam Feed"
-                    className="relative z-10 w-full h-full object-contain"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  {!isCameraOn ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 z-20 gap-3">
+                      <Camera className="w-12 h-12 text-gray-800" />
+                      <p className="text-gray-600 font-bold uppercase tracking-widest text-xs">Camera Disabled</p>
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-0">
+                      <Camera className="w-12 h-12 text-gray-700" />
+                      <p className="text-gray-600 text-sm font-medium">Camera Feed</p>
+                      <p className="text-gray-700 text-xs">Start the Python server to activate</p>
+                    </div>
+                  )}
+                  {isCameraOn && (
+                    <img
+                      src="http://localhost:6500/video_feed1"
+                      alt="Webcam Feed"
+                      className="relative z-10 w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* Emotion/Status bar */}

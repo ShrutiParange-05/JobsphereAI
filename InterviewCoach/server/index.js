@@ -3,6 +3,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const axios = require("axios");
 
 dotenv.config();
 
@@ -28,7 +29,13 @@ if (!GEMINI_API_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+
+// ─── ElevenLabs Setup ─────────────────────────────────────────────────────
+const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
+// Switching to a more natural, empathetic voice (e.g., Jessica)
+const VOICE_ID = process.env.VOICE_ID || "cgSgSAsjRGOvdWU7KnDq"; 
+
 
 // Store the Gemini chat sessions for each user
 const userSessions = {};
@@ -95,7 +102,10 @@ app.post("/generate-voice", async (req, res) => {
     if (!userSessions[userId]) {
       userSessions[userId] = model.startChat({
         history: [],
-        systemInstruction: getSystemPrompt(role || "Software Engineer"),
+        systemInstruction: {
+          role: "user",
+          parts: [{ text: getSystemPrompt(role || "Software Engineer") }],
+        },
       });
       console.log(`🆕 New chat session created for ${userId} (${role})`);
     }
@@ -111,9 +121,43 @@ app.post("/generate-voice", async (req, res) => {
     
     console.log(`🤖 AI: "${aiResponse.substring(0, 100)}..."`);
 
-    // Respond with text only (browser SpeechSynthesis handles TTS)
+    let audioBase64 = null;
+    
+    // Generate high-quality voice with ElevenLabs
+    if (ELEVEN_LABS_API_KEY) {
+      try {
+        console.log("🎙️ Generating ElevenLabs audio...");
+        const voiceResponse = await axios.post(
+          `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
+          {
+            text: aiResponse,
+            model_id: "eleven_flash_v2_5", // Using the latest ultra-natural model
+            voice_settings: {
+              stability: 0.45,
+              similarity_boost: 0.8,
+              style: 0.5,
+              use_speaker_boost: true
+            },
+          },
+          {
+            headers: {
+              "xi-api-key": ELEVEN_LABS_API_KEY,
+              "Content-Type": "application/json",
+            },
+            responseType: "arraybuffer",
+          }
+        );
+        
+        audioBase64 = Buffer.from(voiceResponse.data).toString("base64");
+        console.log("✅ Audio generated successfully");
+      } catch (voiceError) {
+        console.error("⚠️ ElevenLabs Error (falling back to browser TTS):", voiceError.response ? voiceError.response.status : voiceError.message);
+      }
+    }
+
+    // Respond with text and optional audio
     res.json({
-      audio: null,
+      audio: audioBase64,
       text: aiResponse,
       success: true,
     });

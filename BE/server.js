@@ -18,6 +18,8 @@ const { default: jobrouter } = await import("./routes/jobroutes.js");
 const { default: testRouter } = await import("./routes/testRoutes.js");
 const { default: careerRouter } = await import("./routes/careerRoutes.js");
 const { default: resumeRoutes } = await import("./routes/resumeRoutes.js");
+const { default: candidateRouter } = await import("./routes/candidateRoutes.js");
+const { default: resumeOptimizerRouter } = await import("./routes/resumeOptimizerRoutes.js");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -27,7 +29,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -40,5 +42,7 @@ app.use("/api/career", careerRouter);
 app.use("/api/test", testRouter);
 app.use("/api/jobs", jobrouter);
 app.use("/api/resume", resumeRoutes);
+app.use("/api/candidates", candidateRouter);
+app.use("/api/resume-optimizer", resumeOptimizerRouter);
 
 app.listen(PORT, () => console.log(`Server is running on PORT ${PORT}`));
