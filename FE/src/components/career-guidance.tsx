@@ -176,11 +176,9 @@ export default function CareerGuidance() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold mb-2">Career Guidance</h2>
+        <h2 className="text-3xl font-bold mb-2 text-white">Career Guidance</h2>
         <p className="text-gray-400">Your personalized career development insights</p>
       </div>
-
-      // (Later down in the component output...)
       <motion.div 
         variants={containerVariants}
         initial="hidden"

@@ -225,9 +225,9 @@ export const InterviewCoach = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Main Interface */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               {/* AI Avatar Card */}
-              <div className="glass-card p-7 relative overflow-hidden group">
+              <div className="glass-card p-7 relative overflow-hidden group md:col-span-4 flex flex-col justify-between">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 {/* Card Badge */}
@@ -235,13 +235,7 @@ export const InterviewCoach = () => {
                   <div className="p-1.5 bg-blue-500/10 rounded-lg">
                     <Sparkles className="w-4 h-4 text-blue-400" />
                   </div>
-                  <span className="text-sm font-bold text-white uppercase tracking-widest">AI Assistant</span>
-                  {isPlaying && (
-                    <div className="ml-auto flex items-center gap-1.5 text-xs text-blue-400 font-semibold">
-                      <Activity className="w-3 h-3 animate-pulse" />
-                      Speaking...
-                    </div>
-                  )}
+                  <span className="text-sm font-bold text-white uppercase tracking-widest leading-none">AI Avatar</span>
                 </div>
 
                 {/* Globe / Avatar */}
@@ -307,7 +301,7 @@ export const InterviewCoach = () => {
               </div>
 
               {/* Video Feed Card */}
-              <div className="glass-card p-7 relative overflow-hidden group">
+              <div className="glass-card p-7 relative overflow-hidden group md:col-span-8 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 <div className="flex items-center gap-2 mb-6">
@@ -321,21 +315,21 @@ export const InterviewCoach = () => {
                   </div>
                 </div>
 
-                <div className="aspect-video bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800/50 relative">
-                  <img
-                    src="http://localhost:6500/video_feed1"
-                    alt="Webcam Feed"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                <div className="aspect-video bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800/50 relative flex-1 min-h-[300px]">
                   {/* Fallback when camera not connected */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-0">
                     <Camera className="w-12 h-12 text-gray-700" />
                     <p className="text-gray-600 text-sm font-medium">Camera Feed</p>
                     <p className="text-gray-700 text-xs">Start the Python server to activate</p>
                   </div>
+                  <img
+                    src="http://localhost:6500/video_feed1"
+                    alt="Webcam Feed"
+                    className="relative z-10 w-full h-full object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
                 </div>
 
                 {/* Emotion/Status bar */}

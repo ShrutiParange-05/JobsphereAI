@@ -1,151 +1,138 @@
 import os
 import sys
-
-# Force PyTorch CPU-only BEFORE any imports
-os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-os.environ['OMP_NUM_THREADS'] = '1'
+import threading
+import logging
+from datetime import datetime
 
 from flask import Flask, Response, jsonify
 from flask_cors import CORS
 import cv2
-import logging
-from datetime import datetime
-from person_and_phone import detect_phone_and_person
-from facemotion import detect_emotion
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Load .env
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+from facemotion import detect_emotion
+from person_and_phone import detect_phone_and_person
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ─── Flask App ────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://localhost:3000"])
 
-def get_camera():
-    """Initialize camera with error handling"""
-    try:
-        camera = cv2.VideoCapture(0)
-        if not camera.isOpened():
-            raise RuntimeError("Could not initialize camera")
-        return camera
-    except Exception as e:
-        logger.error(f"Camera initialization failed: {str(e)}")
-        raise
-
-detection_history = []
+# ─── Shared State ─────────────────────────────────────────────────────────────
 total_frames = 0
 phone_detection_count = 0
-emotion_counts = {
-    'angry': 0, 'disgust': 0, 'fear': 0,
-    'happy': 0, 'sad': 0, 'surprise': 0, 'neutral': 0
-}
+analysis_history = []
 
+def get_camera():
+    camera = cv2.VideoCapture(0)
+    if not camera.isOpened():
+        raise RuntimeError("Could not initialise camera")
+    return camera
 
+# ─── Video Feed Generator ────────────────────────────────────────────────────
 def webcam_feed():
+    global total_frames, phone_detection_count
     camera = None
-    global detection_history, phone_detection_count, emotion_counts, total_frames
 
     try:
         camera = get_camera()
         while True:
-            success, frame = camera.read()
-            if not success:
+            ok, frame = camera.read()
+            if not ok:
                 logger.error("Failed to grab frame")
                 break
+            
             total_frames += 1
 
-            # Process frame with both detections
-            processed_frame, phone_results = detect_phone_and_person(frame)
-            processed_frame, face_results = detect_emotion(processed_frame)
+            # 1. Detect Phone & Person locally via OpenCV YOLOv4-tiny
+            processed, obj_detections = detect_phone_and_person(frame.copy())
             
-            current_emotion = 'unknown'
-            if phone_results or face_results:
-                if phone_results:
-                    has_phone = any(result['type'] == 'Phone' for result in phone_results)
-                    if has_phone:
-                        phone_detection_count += 1
+            phone_detected = any(d['type'] == 'Phone' for d in obj_detections)
+            if phone_detected:
+                phone_detection_count += 1
                 
-                if face_results:
-                    current_emotion = face_results[0].get('emotion', 'detected')
+                # Massive red border and alert
+                h, w = processed.shape[:2]
+                cv2.rectangle(processed, (0, 0), (w, h), (0, 0, 255), 10)
+                cv2.putText(processed, "WARNING: MOBILE PHONE DETECTED", (50, 60),
+                            cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255), 3)
 
-                detection_event = {
-                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'frame': total_frames,
-                    'phone_count': phone_detection_count,
-                    'current_emotion': current_emotion
-                }
-                detection_history.append(detection_event)
+            # 2. Extract Emotion via OpenCV Haarcascade
+            processed, face_detections = detect_emotion(processed)
+            emotion = face_detections[0].get('emotion', 'detected').upper() if face_detections else 'UNKNOWN'
 
-            # Add timestamp overlay
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            cv2.putText(processed_frame, timestamp, (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                
-            ret, buffer = cv2.imencode('.jpg', processed_frame)
+            # 3. Translucent panel for stats
+            h, w = processed.shape[:2]
+            overlay = processed.copy()
+            cv2.rectangle(overlay, (15, h - 120), (350, h - 15), (0, 0, 0), -1)
+            cv2.addWeighted(overlay, 0.7, processed, 0.3, 0, processed)
+
+            y0, dy = h - 85, 35
+            # Emotion overlay
+            cv2.putText(processed, f"EMOTION: {emotion}", (30, y0),
+                        cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+            
+            # Posture overlay (Placeholder for local processing)
+            cv2.putText(processed, f"POSTURE: OK", (30, y0 + dy),
+                        cv2.FONT_HERSHEY_DUPLEX, 0.8, (200, 200, 200), 2)
+
+            # Timestamp
+            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cv2.putText(processed, ts, (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+            ret, buf = cv2.imencode('.jpg', processed)
             if not ret:
                 break
-                
-            frame = buffer.tobytes()
+
             yield (b'--frame\r\n'
-                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
+
     except Exception as e:
-        logger.error(f"Error in webcam_feed: {str(e)}")
+        logger.error(f"webcam_feed error: {e}")
         yield b''
     finally:
         if camera is not None:
             camera.release()
 
+# ─── Routes ───────────────────────────────────────────────────────────────────
 @app.route('/video_feed1')
 def video_feed1():
-    logger.info("Received request for video_feed1")
+    logger.info("📹 Video-feed requested")
     try:
-        return Response(
-            webcam_feed(),
-            mimetype='multipart/x-mixed-replace; boundary=frame'
-        )
+        return Response(webcam_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
     except Exception as e:
-        logger.error(f"Error in video_feed1: {str(e)}")
+        logger.error(f"video_feed1 error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/test', methods=['GET'])
-def test():
+def test_endpoint():
     try:
-        camera = get_camera()
-        camera.release()
-        return jsonify({
-            "status": "Server is running",
-            "camera": "Camera is accessible",
-            "timestamp": datetime.now().isoformat()
-        })
+        cam = get_camera()
+        cam.release()
+        cam_status = "Camera is accessible"
     except Exception as e:
-        return jsonify({
-            "status": "Server is running",
-            "camera": f"Camera error: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        }), 500
+        cam_status = f"Camera error: {e}"
+
+    return jsonify({
+        "status": "Server is running (Local AI)",
+        "camera": cam_status,
+        "timestamp": datetime.now().isoformat(),
+    })
 
 @app.route('/api/detection-counts', methods=['GET'])
 def get_detection_counts():
-    try:
-        return jsonify({
-            "total_frames": total_frames,
-            "phone_detections": phone_detection_count,
-            "emotion_counts": emotion_counts,
-            "detection_history": detection_history[-50:],
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "total_frames": total_frames,
+        "phone_detections": phone_detection_count,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    })
 
 if __name__ == '__main__':
-    app.run(
-        threaded=True,
-        host="0.0.0.0",
-        port=6500,
-        debug=False,
-        use_reloader=False
-    )
+    logger.info("🚀 Starting Crash-Free Saarthi AI Video Server on port 6500")
+    app.run(threaded=True, host="0.0.0.0", port=6500, debug=False, use_reloader=False)

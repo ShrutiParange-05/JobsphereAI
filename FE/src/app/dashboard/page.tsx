@@ -17,7 +17,6 @@ function AnimatedValue({ value, suffix = "" }: { value: number | string, suffix?
   useEffect(() => {
     let target = typeof value === 'number' ? value : parseInt(String(value).match(/\d+/)?.[0] || '0');
     if (isNaN(target)) target = 0;
-    let start = 0;
     const duration = 2000;
     const startTime = performance.now();
     const animate = (currentTime: number) => {
@@ -179,76 +178,70 @@ export default function Page() {
 
   const skillLevel = getSkillLevel(testScore);
 
+  const recommendedCourses = userData?.recommendedCourses ? userData.recommendedCourses.split(',') : ["Algorithms", "System Design", "Cloud Computing"];
+
   const assessmentData = [
     {
-      skillLevel: "Advanced (80-100%)",
-      recommendedTime: "2-3 hours/week",
-      improvementArea: "Industry Projects & Leadership",
-      colorClass: "text-green-400",
+      skillLevel: testScore > 0 ? `Current Level (${testScore}%)` : "No Score Yet",
+      recommendedTime: testScore >= 80 ? "Maintain (1-2 hrs/wk)" : testScore >= 60 ? "Improve (3-4 hrs/wk)" : "Focus (5+ hrs/wk)",
+      improvementArea: recommendedCourses[0]?.trim() || "Fundamentals",
+      colorClass: skillLevel.color,
     },
     {
-      skillLevel: "Intermediate (60-79%)",
-      recommendedTime: "4-5 hours/week",
-      improvementArea: "Problem Solving & Optimization",
+      skillLevel: "Secondary Focus",
+      recommendedTime: "Medium Priority",
+      improvementArea: recommendedCourses[1]?.trim() || "Advanced Concepts",
       colorClass: "text-blue-400",
     },
     {
-      skillLevel: "Beginner (40-59%)",
-      recommendedTime: "1-2 hours/day",
-      improvementArea: "Core Concepts & Practice",
-      colorClass: "text-yellow-400",
+      skillLevel: "Long-term Goal",
+      recommendedTime: "Future Growth",
+      improvementArea: recommendedCourses[2]?.trim() || "Project Building",
+      colorClass: "text-purple-400",
     },
     {
-      skillLevel: "Foundation (0-39%)",
-      recommendedTime: "2-3 hours/day",
-      improvementArea: "Fundamentals & Basics",
+      skillLevel: "Industry Benchmark",
+      recommendedTime: "Target: 80%+",
+      improvementArea: "Full Stack Capability",
       colorClass: "text-gray-400",
     },
   ];
 
+  const estimatedPercentile = hasTestResults ? Math.max(1, Math.min(99, Math.round(testScore * 1.15 - 15))) : 0;
+
   const proficiencyData = {
-    skillLevels: {
-      beginner: testScore < 40 ? 100 : testScore < 60 ? 60 : 20,
-      intermediate: testScore >= 40 && testScore < 80 ? 100 : testScore >= 60 ? 50 : 30,
-      advanced: testScore >= 80 ? 100 : testScore >= 60 ? 40 : 10,
-    },
-    topicPerformance: [
-      { label: "Knowledge", percentage: testScore.toString() },
-      { label: "Application", percentage: (testScore * 0.9).toFixed(0) },
-      { label: "Analysis", percentage: (testScore * 0.8).toFixed(0) },
-    ],
-    genderData: { male: 50, female: 50 },
-    ageData: [
-      { label: "18-24", percentage: 30 },
-      { label: "25-34", percentage: 40 },
-      { label: "35-44", percentage: 20 },
-      { label: "45+", percentage: 10 },
-    ],
+    percentile: estimatedPercentile,
+    scoreThresholds: [
+      { label: "Top Performers (80-100)", percentage: 15, color: "bg-green-500" },
+      { label: "Proficient (60-79)", percentage: 35, color: "bg-blue-500" },
+      { label: "Emerging (40-59)", percentage: 35, color: "bg-yellow-500" },
+      { label: "Beginners (0-39)", percentage: 15, color: "bg-gray-500" },
+    ]
   };
 
   const learningTimeData = [
     {
-      period: "Week 1",
-      timeRange: "Initial",
-      performance: String(hasTestResults ? testScore * 0.7 : 0),
+      period: "Initial Level",
+      timeRange: "Start",
+      performance: String(hasTestResults ? Math.max(0, testScore - 15) : 0),
       colorClass: "bg-blue-500",
     },
     {
-      period: "Week 2",
-      timeRange: "Progress",
-      performance: String(hasTestResults ? testScore * 0.85 : 0),
+      period: "Current Form",
+      timeRange: "Now",
+      performance: String(hasTestResults ? testScore : 0),
       colorClass: "bg-green-500",
     },
     {
-      period: "Week 3",
-      timeRange: "Growth",
-      performance: String(hasTestResults ? testScore * 0.95 : 0),
+      period: "Target Goal",
+      timeRange: "Next 3 months",
+      performance: String(hasTestResults ? Math.min(100, testScore + 20) : 0),
       colorClass: "bg-yellow-500",
     },
     {
-      period: "Current",
-      timeRange: "Now",
-      performance: String(testScore),
+      period: "Mastery",
+      timeRange: "Long term",
+      performance: "95",
       colorClass: "bg-purple-500",
     },
   ];
@@ -378,7 +371,7 @@ export default function Page() {
         {/* Metrics */}
         <ScrollReveal delay={200}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {metrics.map((metric, i) => (
+            {metrics.map((metric) => (
               <div key={metric.title} className="hover:-translate-y-1 transition-transform duration-300 ease-out hover:shadow-lg hover:shadow-cyan-500/10 rounded-xl">
                 <MetricCard {...metric} />
               </div>

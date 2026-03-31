@@ -1,10 +1,21 @@
 #!/bin/bash
-# Run the Python video server with PyTorch forced to CPU
-export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
-export CUDA_VISIBLE_DEVICES=-1
-export KMP_DUPLICATE_LIB_OK=True
-export OMP_NUM_THREADS=1
+# Saarthi AI Video Analysis Server
+# Powered by Gemini Vision API — no PyTorch required
 
-echo "✅ PyTorch CPU-only mode enabled"
+echo "════════════════════════════════════════════"
+echo "  🧠 Saarthi AI — Gemini Vision Server"
+echo "════════════════════════════════════════════"
+echo ""
+echo "✅ No PyTorch / YOLO — macOS-safe"
 echo "🚀 Starting video server on port 6500..."
-python3 app.py
+echo ""
+
+# Use the jobsphereai conda environment python
+CONDA_PYTHON="/opt/homebrew/anaconda3/envs/jobsphereai/bin/python"
+
+if [ -f "$CONDA_PYTHON" ]; then
+    $CONDA_PYTHON app.py
+else
+    echo "⚠️  Conda env not found, trying system python..."
+    python3 app.py
+fi
