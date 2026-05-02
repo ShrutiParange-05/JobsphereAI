@@ -27,6 +27,9 @@ interface SourceMeta {
   'LinkedIn (JSearch)'?: number;
   Adzuna?: number;
   'Remotive (Remote)'?: number;
+  Arbeitnow?: number;
+  'The Muse'?: number;
+  Greenhouse?: number;
   SkillAssessmentAPI?: number;
   total?: number;
 }
@@ -37,6 +40,9 @@ const sourceColors: Record<string, string> = {
   'Google Jobs (SerpAPI)': 'bg-red-500/20 text-red-400 border-red-500/30',
   Adzuna: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   'Remotive (Remote)': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  Arbeitnow: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  'The Muse': 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+  Greenhouse: 'bg-green-500/20 text-green-400 border-green-500/30',
   SkillAssessmentAPI: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 };
 
@@ -123,8 +129,8 @@ const DashboardJobsPage = () => {
 
             {/* Source pills */}
             <div className="flex flex-wrap justify-center gap-2 mt-4">
-              {['LinkedIn', 'Google Jobs', 'Adzuna', 'Remotive'].map((s) => (
-                <span key={s} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${sourceColors[s] || sourceColors[s + ' (JSearch)'] || 'bg-gray-600/20 text-gray-400 border-gray-500/30'}`}>
+              {['Remotive', 'Arbeitnow', 'The Muse', 'Greenhouse', 'LinkedIn', 'Adzuna'].map((s) => (
+                <span key={s} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${sourceColors[s] || sourceColors[s + ' (JSearch)'] || sourceColors[s + ' (Remote)'] || 'bg-gray-600/20 text-gray-400 border-gray-500/30'}`}>
                   {s}
                 </span>
               ))}
@@ -262,7 +268,7 @@ const DashboardJobsPage = () => {
             </div>
             <p className="text-blue-400 mb-2">Searching across all job sources...</p>
             <div className="flex gap-2 mt-2">
-              {['LinkedIn', 'Google Jobs', 'Adzuna', 'Remotive'].map((s) => (
+              {['Remotive', 'Arbeitnow', 'The Muse', 'Greenhouse'].map((s) => (
                 <span key={s} className="text-xs text-gray-500 animate-pulse">{s}</span>
               ))}
             </div>

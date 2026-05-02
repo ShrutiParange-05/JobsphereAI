@@ -304,7 +304,7 @@ Return ONLY valid JSON:
 }`;
 
     console.log("🤖 Sending to Gemini for full analysis...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 
@@ -364,7 +364,7 @@ router.post("/optimize", upload.single("resume"), async (req, res) => {
     const prompt = promptFn(resumeText.slice(0, 5000), jobTitle, jobDescription);
 
     console.log("🤖 Sending to Gemini for optimization...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 

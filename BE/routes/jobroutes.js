@@ -168,7 +168,108 @@ async function fetchFromRemotive(jobTitle) {
   }
 }
 
-// ─── Source 5: Original skillassessmentapi (fallback) ──────────────────────
+// ─── Source 5: Arbeitnow (free, no key needed) ─────────────────────────────
+
+async function fetchFromArbeitnow(jobTitle) {
+  try {
+    const search = encodeURIComponent(jobTitle);
+    const url = `https://www.arbeitnow.com/api/job-board-api?search=${search}&per_page=10`;
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) throw new Error(`Arbeitnow error: ${response.status}`);
+    const data = await response.json();
+    const jobs = (data.data || []).map((job) =>
+      normalizeJob({
+        job_id: String(job.slug || job.id || Math.random().toString(36).slice(2)),
+        title: job.title,
+        company_name: job.company_name || "Unknown",
+        location: job.location || "Remote",
+        description: (job.description || "").replace(/<[^>]+>/g, "").slice(0, 300) + "...",
+        extensions: job.tags || [],
+        apply_options: [{ title: "Apply on Arbeitnow", link: job.url }],
+        source: "Arbeitnow",
+      })
+    );
+    console.log(`✅ Arbeitnow: ${jobs.length} jobs`);
+    return jobs;
+  } catch (err) {
+    console.error("❌ Arbeitnow failed:", err.message);
+    return [];
+  }
+}
+
+// ─── Source 6: The Muse (free, no key needed) ──────────────────────────────
+
+async function fetchFromTheMuse(jobTitle) {
+  try {
+    const search = encodeURIComponent(jobTitle);
+    const url = `https://www.themuse.com/api/public/jobs?page=0&descending=true&category=${search}`;
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) throw new Error(`TheMuse error: ${response.status}`);
+    const data = await response.json();
+    const jobs = (data.results || []).slice(0, 10).map((job) =>
+      normalizeJob({
+        job_id: String(job.id),
+        title: job.name,
+        company_name: job.company?.name || "Unknown",
+        location: (job.locations || []).map((l) => l.name).join(", ") || "Remote",
+        description: (job.contents || "").replace(/<[^>]+>/g, "").slice(0, 300) + "...",
+        extensions: job.categories?.map((c) => c.name) || [],
+        apply_options: [{ title: "Apply on The Muse", link: job.refs?.landing_page }],
+        source: "The Muse",
+      })
+    );
+    console.log(`✅ The Muse: ${jobs.length} jobs`);
+    return jobs;
+  } catch (err) {
+    console.error("❌ The Muse failed:", err.message);
+    return [];
+  }
+}
+
+// ─── Source 7: Greenhouse public boards (free, no key) ─────────────────────
+
+async function fetchFromGreenhouse(jobTitle) {
+  // Top tech companies with public Greenhouse boards
+  const boards = ["airbnb", "figma", "stripe", "notion", "datadog", "cloudflare", "vercel", "hashicorp"];
+
+  try {
+    const searchLower = jobTitle.toLowerCase();
+    const boardFetches = boards.map(async (board) => {
+      try {
+        const url = `https://boards-api.greenhouse.io/v1/boards/${board}/jobs?content=true`;
+        const response = await fetchWithTimeout(url, {}, 5000);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.jobs || [])
+          .filter((job) => job.title.toLowerCase().includes(searchLower))
+          .slice(0, 3)
+          .map((job) =>
+            normalizeJob({
+              job_id: String(job.id),
+              title: job.title,
+              company_name: board.charAt(0).toUpperCase() + board.slice(1),
+              location: job.location?.name || "Remote",
+              description: (job.content || "").replace(/<[^>]+>/g, "").slice(0, 300) + "...",
+              extensions: job.departments?.map((d) => d.name) || [],
+              apply_options: [{ title: `Apply at ${board.charAt(0).toUpperCase() + board.slice(1)}`, link: job.absolute_url }],
+              source: "Greenhouse",
+            })
+          );
+      } catch {
+        return [];
+      }
+    });
+    const results = await Promise.allSettled(boardFetches);
+    const jobs = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+    console.log(`✅ Greenhouse: ${jobs.length} jobs (from ${boards.length} boards)`);
+    return jobs;
+  } catch (err) {
+    console.error("❌ Greenhouse failed:", err.message);
+    return [];
+  }
+}
+
+// ─── Source 8: Original skillassessmentapi (fallback) ──────────────────────
 
 async function fetchFromSkillApi(jobTitle, location) {
   try {
@@ -202,16 +303,19 @@ router.post("/job", async (req, res) => {
   console.log(`\n🔍 Multi-source job search: "${job_title}" in "${loc}"`);
 
   // Run all sources in parallel
-  const [serpJobs, adzunaJobs, linkedInJobs, remotiveJobs, skillApiJobs] = await Promise.allSettled([
+  const [serpJobs, adzunaJobs, linkedInJobs, remotiveJobs, arbeitnowJobs, museJobs, greenhouseJobs, skillApiJobs] = await Promise.allSettled([
     fetchFromSerpApi(job_title, loc),
     fetchFromAdzuna(job_title, loc),
     fetchFromLinkedIn(job_title, loc),
     fetchFromRemotive(job_title),
+    fetchFromArbeitnow(job_title),
+    fetchFromTheMuse(job_title),
+    fetchFromGreenhouse(job_title),
     fetchFromSkillApi(job_title, loc),
   ]).then((results) => results.map((r) => (r.status === "fulfilled" ? r.value : [])));
 
   // Merge & deduplicate by job title + company
-  const allJobs = [...serpJobs, ...linkedInJobs, ...adzunaJobs, ...remotiveJobs, ...skillApiJobs];
+  const allJobs = [...serpJobs, ...linkedInJobs, ...adzunaJobs, ...remotiveJobs, ...arbeitnowJobs, ...museJobs, ...greenhouseJobs, ...skillApiJobs];
   const seen = new Set();
   const uniqueJobs = allJobs.filter((job) => {
     const key = `${job.title.toLowerCase()}__${job.company_name.toLowerCase()}`;
@@ -226,6 +330,9 @@ router.post("/job", async (req, res) => {
     "LinkedIn (JSearch)": linkedInJobs.length,
     Adzuna: adzunaJobs.length,
     "Remotive (Remote)": remotiveJobs.length,
+    Arbeitnow: arbeitnowJobs.length,
+    "The Muse": museJobs.length,
+    Greenhouse: greenhouseJobs.length,
     "SkillAssessmentAPI": skillApiJobs.length,
     total: uniqueJobs.length,
   };

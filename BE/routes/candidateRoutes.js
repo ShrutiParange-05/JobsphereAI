@@ -192,7 +192,7 @@ IMPORTANT: Return ONLY valid JSON with this exact structure:
 }`;
 
     console.log("🤖 Sending to Gemini for analysis...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 
@@ -287,7 +287,7 @@ IMPORTANT: Return ONLY valid JSON with this exact structure:
 Rank from best to worst. Be objective and data-driven.`;
 
     console.log("🤖 Sending multi-candidate comparison to Gemini...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 
@@ -377,7 +377,7 @@ Return ONLY valid JSON:
 
 Provide 5 job matches and 3 YC board matches. Use REAL, working search URLs.`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 

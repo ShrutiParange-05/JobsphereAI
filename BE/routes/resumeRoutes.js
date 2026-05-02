@@ -1,11 +1,11 @@
 import { Router } from "express";
 import multer from "multer";
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import os from "os";
-const OLLAMA_URL = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "llama3.2";
-const MAX_THREADS = os.cpus().length;
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Import pdf-parse correctly
 import { createRequire } from 'module';
@@ -27,7 +27,17 @@ const upload = multer({
   }
 });
 
-
+// Helper: clean markdown/code fences from Gemini response
+function cleanJsonResponse(text) {
+  let cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "");
+  cleaned = cleaned.replace(/^\s*json\s*/i, "").replace(/`/g, "").trim();
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  return cleaned;
+}
 
 router.post('/upload', upload.single('resume'), async (req, res) => {
   try {
@@ -53,8 +63,6 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
       throw new Error('No text content found in PDF');
     }
 
-
-
     const prompt = `You are a professional resume analyzer. Extract skills and generate a concise professional summary from this resume text.
 
 Resume Text:
@@ -68,75 +76,65 @@ IMPORTANT: Return ONLY valid JSON. No markdown, no code blocks, no explanation. 
 
 Extract 10-20 relevant technical and professional skills.`;
 
-    console.log('🤖 Sending to Ollama AI for analysis...');
-
-    const result = await axios.post(OLLAMA_URL, {
-      model: OLLAMA_MODEL,
-      prompt: prompt,
-      stream: false,
-      format: "json",
-      options: {
-        num_thread: MAX_THREADS
-      }
-    });
-    let responseText = result.data.response;
-    
-    console.log('📝 Raw AI response:', responseText.substring(0, 200) + '...');
-    
-    // ✅ IMPROVED: More aggressive cleanup
-    // Remove markdown code blocks
-    responseText = responseText.replace(/```\s*/g, '');
-    
-    // Remove any standalone "json" text at the beginning
-    responseText = responseText.replace(/^\s*json\s*/i, '');
-    
-    // Remove all backticks
-    responseText = responseText.replace(/`/g, '');
-    
-    // Trim whitespace
-    responseText = responseText.trim();
-    
-    // Find first { and last } to extract just the JSON object
-    const firstBrace = responseText.indexOf('{');
-    const lastBrace = responseText.lastIndexOf('}');
-    
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      responseText = responseText.substring(firstBrace, lastBrace + 1);
-    }
-
-    console.log('🧹 Cleaned response:', responseText.substring(0, 200) + '...');
-
-    // Parse JSON
-    let parsedResponse;
     try {
-      parsedResponse = JSON.parse(responseText);
-    } catch (jsonError) {
-      console.error('❌ JSON Parse Error:', jsonError.message);
-      console.error('❌ Response text:', responseText);
-      throw new Error('AI returned invalid JSON format');
+      console.log('🤖 Sending to Gemini AI for analysis...');
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      console.log('📝 Raw AI response:', responseText.substring(0, 200) + '...');
+      
+      const cleanedText = cleanJsonResponse(responseText);
+
+      // Parse JSON
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(cleanedText);
+      } catch (jsonError) {
+        console.error('❌ JSON Parse Error:', jsonError.message);
+        throw new Error('AI returned invalid JSON format');
+      }
+
+      // Validate response structure
+      if (!parsedResponse.profile_summary || !Array.isArray(parsedResponse.skills)) {
+        throw new Error('AI response missing required fields');
+      }
+
+      console.log('✅ Successfully extracted:');
+      console.log('   - Summary:', parsedResponse.profile_summary.substring(0, 50) + '...');
+      console.log('   - Skills count:', parsedResponse.skills.length);
+
+      // Return response
+      return res.status(200).json(
+        new ApiResponse(
+          true, 
+          200, 
+          {
+            summary: parsedResponse.profile_summary,
+            skills: parsedResponse.skills
+          },
+          'Resume parsed successfully'
+        )
+      );
+    } catch (aiError) {
+      console.warn('⚠️ Gemini AI error during resume parsing, using basic fallback:', aiError.message);
+      
+      const fallbackSkills = ["Communication", "Problem Solving", "Teamwork", "Technical Proficiency"];
+      const fallbackSummary = resumeText.substring(0, 250).replace(/\n/g, ' ') + "...";
+
+      return res.status(200).json(
+        new ApiResponse(
+          true, 
+          200, 
+          {
+            summary: fallbackSummary,
+            skills: fallbackSkills,
+            isFallback: true
+          },
+          'Resume processed with fallback logic due to AI limit'
+        )
+      );
     }
-
-    // Validate response structure
-    if (!parsedResponse.profile_summary || !Array.isArray(parsedResponse.skills)) {
-      throw new Error('AI response missing required fields');
-    }
-
-    console.log('✅ Successfully extracted:');
-    console.log('   - Summary:', parsedResponse.profile_summary.substring(0, 50) + '...');
-    console.log('   - Skills count:', parsedResponse.skills.length);
-
-    // Return response
-    return res.status(200).json(
-      new ApiResponse(
-        true, 
-        200, 
-        {
-          summary: parsedResponse.profile_summary,
-          skills: parsedResponse.skills
-        },
-        'Resume parsed successfully'
-      )
-    );
 
   } catch (error) {
     console.error('❌ Resume parsing error:', error);
@@ -154,3 +152,4 @@ Extract 10-20 relevant technical and professional skills.`;
 });
 
 export default router;
+

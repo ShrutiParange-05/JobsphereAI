@@ -29,7 +29,7 @@ if (!GEMINI_API_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // ─── ElevenLabs Setup ─────────────────────────────────────────────────────
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;

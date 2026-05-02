@@ -123,7 +123,7 @@ IMPORTANT: Return ONLY valid JSON. No markdown, no code fences, no explanation. 
     // ─── Call Gemini ────────────────────────────────────────────────────
 
     console.log("🤖 Calling Gemini AI for career guidance...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
 

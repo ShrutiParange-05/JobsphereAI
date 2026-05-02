@@ -1,37 +1,101 @@
 import { Router } from "express";
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import os from "os";
-const OLLAMA_URL = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "llama3.2";
-const MAX_THREADS = os.cpus().length;
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const router = Router();
 
 
 // Helper function to clean AI response
-function cleanAIResponse(responseText) {
-  console.log('📝 Raw response length:', responseText.length);
-  console.log('📝 First 200 chars:', responseText.substring(0, 200));
-  
-  // Try to extract JSON from markdown code blocks
-  const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (jsonMatch) {
-    responseText = jsonMatch[1].trim();
-    console.log('✂️ Extracted from code blocks');
-  } else {
-    // Clean markdown markers
-    responseText = responseText
-      .replace(/^\s*```(?:json)?\s*/i, '')
-      .replace(/\s*```\s*$/g, '')
-      .replace(/^\s*json\s*/i, '')
-      .trim();
-    console.log('🧹 Cleaned markers');
+function cleanJsonResponse(text) {
+  let cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "");
+  cleaned = cleaned.replace(/^\s*json\s*/i, "").replace(/`/g, "").trim();
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
   }
-  
-  console.log('✅ Final cleaned (first 200 chars):', responseText.substring(0, 200));
-  return responseText;
+  return cleaned;
 }
+
+// Fallback questions in case of API failure or quota limit
+const FALLBACK_TESTS = {
+  "default": [
+    {
+      "Question": "What is the primary purpose of version control systems like Git?",
+      "Options": ["To compile code faster", "To track changes and collaborate on code", "To encrypt source files", "To automatically deploy applications"],
+      "Answer": "To track changes and collaborate on code",
+      "Difficulty": "easy",
+      "Skill": "Software Engineering"
+    },
+    {
+      "Question": "In React, what is the 'virtual DOM' primarily used for?",
+      "Options": ["To store user data securely", "To optimize rendering performance by minimizing actual DOM updates", "To replace CSS for styling", "To handle database connections"],
+      "Answer": "To optimize rendering performance by minimizing actual DOM updates",
+      "Difficulty": "medium",
+      "Skill": "React"
+    },
+    {
+      "Question": "Which of the following is a key characteristic of RESTful APIs?",
+      "Options": ["Stateful communication", "Statelessness", "Proprietary protocols", "Mandatory XML format"],
+      "Answer": "Statelessness",
+      "Difficulty": "medium",
+      "Skill": "Web Development"
+    },
+    {
+      "Question": "In Python, what does the 'with' statement help with when opening a file?",
+      "Options": ["Making the code run faster", "Automatically closing the file after the block finishes", "Encrypting the file content", "Allowing multiple users to edit at once"],
+      "Answer": "Automatically closing the file after the block finishes",
+      "Difficulty": "easy",
+      "Skill": "Python"
+    },
+    {
+      "Question": "What is the time complexity of searching for an element in a balanced binary search tree?",
+      "Options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+      "Answer": "O(log n)",
+      "Difficulty": "hard",
+      "Skill": "Data Structures"
+    },
+    {
+      "Question": "Which SQL command is used to combine rows from two or more tables based on a related column?",
+      "Options": ["COMBINE", "JOIN", "MERGE", "ATTACH"],
+      "Answer": "JOIN",
+      "Difficulty": "easy",
+      "Skill": "SQL"
+    },
+    {
+      "Question": "In JavaScript, what is the difference between '==' and '==='?",
+      "Options": ["There is no difference", "'==' checks value and type, '===' only checks value", "'===' checks value and type, '==' performs type coercion", "'==' is for numbers, '===' is for strings"],
+      "Answer": "'===' checks value and type, '==' performs type coercion",
+      "Difficulty": "medium",
+      "Skill": "JavaScript"
+    },
+    {
+      "Question": "What is the main goal of the 'normalization' process in database design?",
+      "Options": ["To increase data redundancy", "To reduce data redundancy and improve data integrity", "To make queries slower", "To compress the database size"],
+      "Answer": "To reduce data redundancy and improve data integrity",
+      "Difficulty": "hard",
+      "Skill": "Databases"
+    },
+    {
+      "Question": "Which of these is NOT a principle of Object-Oriented Programming (OOP)?",
+      "Options": ["Encapsulation", "Inheritance", "Polymorphism", "Synchronization"],
+      "Answer": "Synchronization",
+      "Difficulty": "medium",
+      "Skill": "OOP"
+    },
+    {
+      "Question": "What does the 'Big O' notation represent in algorithm analysis?",
+      "Options": ["The exact number of lines of code", "The worst-case scenario of time or space complexity", "The average execution time in seconds", "The number of variables used"],
+      "Answer": "The worst-case scenario of time or space complexity",
+      "Difficulty": "hard",
+      "Skill": "Computer Science"
+    }
+  ]
+};
 
 // Generate personalized skill test
 router.post('/generate_skill_test', async (req, res) => {
@@ -46,8 +110,6 @@ router.post('/generate_skill_test', async (req, res) => {
 
     const skillsText = Array.isArray(skills) ? skills.join(', ') : skills;
     console.log('📝 Generating test for:', skillsText.substring(0, 100) + '...');
-
-
 
     const prompt = `Create a CHALLENGING 10-question MCQ test for this candidate:
 
@@ -73,34 +135,43 @@ Return ONLY valid JSON:
   ],
   "TestDuration": 1800,
   "TotalQuestions": 10
-}`;
+}
 
-    console.log('🤖 Sending to Ollama for test generation...');
-    const result = await axios.post(OLLAMA_URL, {
-      model: OLLAMA_MODEL,
-      prompt: prompt,
-      stream: false,
-      format: "json",
-      options: {
-        num_thread: MAX_THREADS
+IMPORTANT: Return ONLY valid JSON. No markdown, no code blocks.`;
+
+    try {
+      console.log('🤖 Sending to Gemini for test generation...');
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      const cleanedText = cleanJsonResponse(responseText);
+      const parsedResponse = JSON.parse(cleanedText);
+      
+      if (!parsedResponse.MCQ_Test || !Array.isArray(parsedResponse.MCQ_Test)) {
+        throw new Error('Invalid test format from AI');
       }
-    });
-    
-    const responseText = cleanAIResponse(result.data.response);
 
-    const parsedResponse = JSON.parse(responseText);
-    
-    if (!parsedResponse.MCQ_Test || !Array.isArray(parsedResponse.MCQ_Test)) {
-      throw new Error('Invalid test format');
+      console.log('✅ Generated via AI:', parsedResponse.MCQ_Test.length, 'questions');
+      return res.status(200).json(parsedResponse);
+
+    } catch (aiError) {
+      console.warn('⚠️ Gemini API error (quota or failure), using fallback test:', aiError.message);
+      
+      const fallbackResponse = {
+        "MCQ_Test": FALLBACK_TESTS.default,
+        "TestDuration": 1800,
+        "TotalQuestions": 10,
+        "isFallback": true
+      };
+
+      return res.status(200).json(fallbackResponse);
     }
 
-    console.log('✅ Generated', parsedResponse.MCQ_Test.length, 'questions');
-    return res.status(200).json(parsedResponse);
-
   } catch (error) {
-    console.error('❌ Test generation error:', error.message);
+    console.error('❌ Critical Test generation error:', error.message);
     return res.status(500).json(
-      new ApiResponse(false, 500, null, 'Failed to generate test: ' + error.message)
+      new ApiResponse(false, 500, null, 'Failed to process test request: ' + error.message)
     );
   }
 });
@@ -121,8 +192,6 @@ router.post('/check_test', async (req, res) => {
     const answersText = answers.map((ans, idx) => 
       `Q${idx + 1}: ${ans.question}\nSelected: ${ans.selected}\nCorrect: ${ans.correct}`
     ).join('\n\n');
-
-
 
     const correctCount = answers.filter(a => a.selected === a.correct).length;
     const rawScore = Math.round((correctCount / answers.length) * 100);
@@ -163,31 +232,45 @@ Return ONLY valid JSON with no extra text:
   "Recommended Career Path": "<specific career title relevant to their profile>",
   "Recommended Courses": ["<Real Course Name - Platform>", "<Real Course Name - Platform>", "<Real Course Name - Platform>"],
   "IntegrityScore": ${violations > 3 ? 50 : violations > 0 ? 75 : 100}
-}`;
+}
 
-    console.log('🤖 Sending to Ollama for test evaluation...');
-    const result = await axios.post(OLLAMA_URL, {
-      model: OLLAMA_MODEL,
-      prompt: prompt,
-      stream: false,
-      format: "json",
-      options: {
-        num_thread: MAX_THREADS
-      }
-    });
-    const responseText = cleanAIResponse(result.data.response);
+IMPORTANT: Return ONLY valid JSON. No markdown, no code blocks.`;
 
-    const parsedResponse = JSON.parse(responseText);
-    console.log('✅ Score:', parsedResponse.Score + '%');
+    try {
+      console.log('🤖 Sending to Gemini for test evaluation...');
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      const cleanedText = cleanJsonResponse(responseText);
+      const parsedResponse = JSON.parse(cleanedText);
+      console.log('✅ Score:', parsedResponse.Score + '%');
+      return res.status(200).json(parsedResponse);
 
-    return res.status(200).json(parsedResponse);
+    } catch (aiError) {
+      console.warn('⚠️ Gemini evaluation failed, using basic calculated results:', aiError.message);
+      
+      return res.status(200).json({
+        "Score": rawScore,
+        "CorrectAnswers": correctCount,
+        "TotalQuestions": answers.length,
+        "Feedback": `You scored ${rawScore}% on the assessment. You showed good understanding of some concepts but have room for improvement in others. Focus on practical implementation of your core skills.`,
+        "Strengths": ["Core concept knowledge", "Attention to detail"],
+        "WeakAreas": ["Advanced scenarios", "Optimization techniques"],
+        "Recommended Career Path": "Software Engineer",
+        "Recommended Courses": ["Full Stack Web Development (Coursera)", "Data Structures and Algorithms (Udemy)", "System Design Fundamentals (YouTube)"],
+        "IntegrityScore": violations > 3 ? 50 : violations > 0 ? 75 : 100,
+        "isFallback": true
+      });
+    }
 
   } catch (error) {
-    console.error('❌ Evaluation error:', error.message);
+    console.error('❌ Critical Evaluation error:', error.message);
     return res.status(500).json(
-      new ApiResponse(false, 500, null, 'Failed to evaluate test: ' + error.message)
+      new ApiResponse(false, 500, null, 'Failed to process evaluation request: ' + error.message)
     );
   }
 });
 
 export default router;
+
